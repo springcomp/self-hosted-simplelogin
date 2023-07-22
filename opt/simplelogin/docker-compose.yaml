@@ -1,0 +1,57 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:12.1
+    container_name: sl-db
+    env_file: .env
+    volumes:
+      - /opt/simplelogin/db:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+  app:
+   image: simplelogin/app:4.6.2-beta
+   container_name: sl-app
+   env_file: .env
+   volumes:
+     - /opt/simplelogin/pgp:/sl/pgp
+     - /opt/simplelogin/upload:/code/static/upload
+     - /opt/simplelogin/dkim.key:/dkim.key
+     - /opt/simplelogin/dkim.pub.key:/dkim.pub.key
+   ports:
+     - "7777:7777"
+   restart: unless-stopped
+   depends_on:
+     - postgres
+
+  email:
+    image: simplelogin/app:4.6.2-beta
+    command: ["python", "email_handler.py"]
+    container_name: sl-email
+    env_file: .env
+    volumes:
+      - /opt/simplelogin/pgp:/sl/pgp
+      - /opt/simplelogin/upload:/code/static/upload
+      - /opt/simplelogin/dkim.key:/dkim.key
+      - /opt/simplelogin/dkim.pub.key:/dkim.pub.key
+    ports:
+      - "20381:20381"
+    restart: unless-stopped
+    depends_on:
+      - postgres
+
+  job-runner:
+    image: simplelogin/app:4.6.2-beta
+    command: ["python", "job_runner.py"]
+    container_name: sl-job-runner
+    env_file: .env
+    volumes:
+      - /opt/simplelogin/pgp:/sl/pgp
+      - /opt/simplelogin/upload:/code/static/upload
+      - /opt/simplelogin/dkim.key:/dkim.key
+      - /opt/simplelogin/dkim.pub.key:/dkim.pub.key
+    restart: unless-stopped
+    depends_on:
+      - postgres
