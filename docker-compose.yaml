@@ -14,6 +14,8 @@ services:
       - ./db:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    networks:
+      - sl-network
     restart: unless-stopped
 
   migration:
@@ -26,6 +28,8 @@ services:
       - ./upload:/code/static/upload
       - ./dkim.key:/dkim.key
       - ./dkim.pub.key:/dkim.pub.key
+    networks:
+      - sl-network
     depends_on:
       postgres:
         condition: service_healthy
@@ -40,6 +44,8 @@ services:
       - ./upload:/code/static/upload
       - ./dkim.key:/dkim.key
       - ./dkim.pub.key:/dkim.pub.key
+    networks:
+      - sl-network
     depends_on:
       migration:
         condition: service_completed_successfully
@@ -55,6 +61,8 @@ services:
       - ./dkim.pub.key:/dkim.pub.key
     ports:
       - "7777:7777"
+    networks:
+      - sl-network
     restart: unless-stopped
     depends_on:
       init:
@@ -72,6 +80,8 @@ services:
       - ./dkim.pub.key:/dkim.pub.key
     ports:
       - "20381:20381"
+    networks:
+      - sl-network
     restart: unless-stopped
     depends_on:
       init:
@@ -87,7 +97,16 @@ services:
       - ./upload:/code/static/upload
       - ./dkim.key:/dkim.key
       - ./dkim.pub.key:/dkim.pub.key
+    networks:
+      - sl-network
     restart: unless-stopped
     depends_on:
       init:
         condition: service_completed_successfully
+
+networks:
+  sl-network:
+    driver: bridge
+    config:
+      subnet: 10.0.0.0/24
+      gateway: 10.0.0.1
