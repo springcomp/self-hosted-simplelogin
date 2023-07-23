@@ -20,7 +20,7 @@ services:
 
   migration:
     image: simplelogin/app:$SL_VERSION
-    command: [ "flask", "db", "upgrade" ]
+    command: [ "alembic", "upgrade", "head" ]
     container_name: sl-migration
     env_file: .env
     volumes:
