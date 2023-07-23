@@ -1,0 +1,8 @@
+.env
+
+db/
+pgp/
+upload/
+
+dkim.pub.key
+dkim.key
