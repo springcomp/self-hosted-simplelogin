@@ -5,26 +5,60 @@ services:
     image: postgres:12.1
     container_name: sl-db
     env_file: .env
+    healthcheck:
+      test: [ "CMD", "pg_isready" ]
+      interval: 10s
+      retries: 3
+      start_period: 1s
     volumes:
-      - /opt/simplelogin/db:/var/lib/postgresql/data
+      - ./db:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     restart: unless-stopped
 
+  migration:
+    image: simplelogin/app:$SL_VERSION
+    command: [ "flask", "db", "upgrade" ]
+    container_name: sl-migration
+    env_file: .env
+    volumes:
+      - ./pgp:/sl/pgp
+      - ./upload:/code/static/upload
+      - ./dkim.key:/dkim.key
+      - ./dkim.pub.key:/dkim.pub.key
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  init:
+    image: simplelogin/app:$SL_VERSION
+    command: [ "python", "init_app.py" ]
+    container_name: sl-init
+    env_file: .env
+    volumes:
+      - ./pgp:/sl/pgp
+      - ./upload:/code/static/upload
+      - ./dkim.key:/dkim.key
+      - ./dkim.pub.key:/dkim.pub.key
+    depends_on:
+      migration:
+        condition: service_completed_successfully
+
   app:
-   image: simplelogin/app:$SL_VERSION
-   container_name: sl-app
-   env_file: .env
-   volumes:
-     - /opt/simplelogin/pgp:/sl/pgp
-     - /opt/simplelogin/upload:/code/static/upload
-     - /opt/simplelogin/dkim.key:/dkim.key
-     - /opt/simplelogin/dkim.pub.key:/dkim.pub.key
-   ports:
-     - "7777:7777"
-   restart: unless-stopped
-   depends_on:
-     - postgres
+    image: simplelogin/app:$SL_VERSION
+    container_name: sl-app
+    env_file: .env
+    volumes:
+      - ./pgp:/sl/pgp
+      - ./upload:/code/static/upload
+      - ./dkim.key:/dkim.key
+      - ./dkim.pub.key:/dkim.pub.key
+    ports:
+      - "7777:7777"
+    restart: unless-stopped
+    depends_on:
+      init:
+        condition: service_completed_successfully
 
   email:
     image: simplelogin/app:$SL_VERSION
@@ -32,15 +66,16 @@ services:
     container_name: sl-email
     env_file: .env
     volumes:
-      - /opt/simplelogin/pgp:/sl/pgp
-      - /opt/simplelogin/upload:/code/static/upload
-      - /opt/simplelogin/dkim.key:/dkim.key
-      - /opt/simplelogin/dkim.pub.key:/dkim.pub.key
+      - ./pgp:/sl/pgp
+      - ./upload:/code/static/upload
+      - ./dkim.key:/dkim.key
+      - ./dkim.pub.key:/dkim.pub.key
     ports:
       - "20381:20381"
     restart: unless-stopped
     depends_on:
-      - postgres
+      init:
+        condition: service_completed_successfully
 
   job-runner:
     image: simplelogin/app:$SL_VERSION
@@ -48,11 +83,11 @@ services:
     container_name: sl-job-runner
     env_file: .env
     volumes:
-      - /opt/simplelogin/pgp:/sl/pgp
-      - /opt/simplelogin/upload:/code/static/upload
-      - /opt/simplelogin/dkim.key:/dkim.key
-      - /opt/simplelogin/dkim.pub.key:/dkim.pub.key
+      - ./pgp:/sl/pgp
+      - ./upload:/code/static/upload
+      - ./dkim.key:/dkim.key
+      - ./dkim.pub.key:/dkim.pub.key
     restart: unless-stopped
     depends_on:
-      - postgres
-
+      init:
+        condition: service_completed_successfully
