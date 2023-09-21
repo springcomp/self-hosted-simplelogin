@@ -35,7 +35,7 @@ First you need to generate a private and public key for DKIM:
 
 ```bash
 openssl genrsa -out dkim.key 1024
-openssl rsa -in dkim.key -pubout -out dkim.pub.key
+openssl rsa -traditional -in dkim.key -pubout -out dkim.pub.key
 ```
 
 You will need the files `dkim.key` and `dkim.pub.key` for the next steps.
