@@ -96,7 +96,9 @@ then the `PUBLIC_KEY` would be `abcdefgh`.
 You can get the `PUBLIC_KEY` by running this command:
 
 ```bash
-sed "s/-----BEGIN PUBLIC KEY-----/v=DKIM1; k=rsa; p=/g" $(pwd)/dkim.pub.key | sed 's/-----END PUBLIC KEY-----//g' |tr -d '\n' | awk 1
+sed "s/-----BEGIN PUBLIC KEY-----/v=DKIM1; k=rsa; p=/g" $(pwd)/dkim.pub.key | \
+  sed 's/-----END PUBLIC KEY-----//g' | \
+  tr -d '\n' | awk 1
 ```
 
 To verify, the following command
@@ -376,7 +378,7 @@ Check that the ssl certificates `/etc/ssl/certs/ssl-cert-snakeoil.pem` and `/etc
 
 ```bash
 openssl req \
-  -x509 -traditional \
+  -x509 \
   -nodes -days 3650 \
   -newkey rsa:2048 \
   -keyout /etc/ssl/private/ssl-cert-snakeoil.key \
