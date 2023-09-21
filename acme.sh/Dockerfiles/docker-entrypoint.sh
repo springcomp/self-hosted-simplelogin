@@ -3,7 +3,8 @@
 directory_path="/root/.acme.sh/*.${DOMAIN}_ecc"
 
 request_zerossl_certificate() {
-  ## echo 'Requesting bootstrap zerossl certificates using acme-challenge'
+  ## echo 'Requesting bootstrap zerossl certificates using ACME challenge'
+  ## 
   ## acme.sh --issue \
   ##   --force \
   ##   --debug --staging --log \
@@ -11,13 +12,14 @@ request_zerossl_certificate() {
   ##   --domain $DOMAIN \
   ##   --webroot /var/www/acme.sh/
 
-  echo 'Requesting bootstrap zerossl certificates using Azure DNS challenge'
-  acme.sh --issue \
-    --force \
-    --log \
-    --email contact@$DOMAIN \
-    --domain *.$DOMAIN --domain $DOMAIN \
-    --dns dns_azure
+  ## echo 'Requesting bootstrap zerossl certificates using Azure DNS challenge'
+  ## 
+  ## acme.sh --issue \
+  ##   --force \
+  ##   --debug --staging --log \
+  ##   --email contact@$DOMAIN \
+  ##   --domain *.$DOMAIN --domain $DOMAIN \
+  ##   --dns dns_azure
 }
 
 
