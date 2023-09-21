@@ -1,6 +1,41 @@
 version: "3.8"
 
 services:
+
+  ## NGINX & SSL CERTS
+  ## =================
+
+  nginx:
+    image: nginx:1.25.2
+    container_name: nginx
+    volumes:
+      - ./nginx/conf.d/:/etc/nginx/conf.d/:ro
+      - ./nginx/ssl/:/etc/nginx/ssl/:ro
+      - ./acme.sh/conf.d/:/root/.acme.sh/:ro
+      - ./acme.sh/www/:/var/www/:rw
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - simplelogin
+    restart: unless-stopped
+
+  acme.sh:
+    image: private/acme.sh:latest
+    build:
+      context: ./acme.sh/Dockerfiles/
+      dockerfile: Dockerfile
+    container_name: acme.sh
+    env_file: .env
+    volumes:
+      - ./acme.sh/www/:/var/www/:rw
+      - ./acme.sh/conf.d/:/root/.acme.sh/:rw
+    depends_on:
+      - nginx
+
+  ## SIMPLE LOGIN
+  ## ============
+  
   postgres:
     image: postgres:12.1
     container_name: sl-db
@@ -15,7 +50,7 @@ services:
     ports:
       - "5432:5432"
     networks:
-      - sl-network
+      - simplelogin
     restart: unless-stopped
 
   migration:
@@ -29,7 +64,7 @@ services:
       - ./dkim.key:/dkim.key
       - ./dkim.pub.key:/dkim.pub.key
     networks:
-      - sl-network
+      - simplelogin
     depends_on:
       postgres:
         condition: service_healthy
@@ -45,7 +80,7 @@ services:
       - ./dkim.key:/dkim.key
       - ./dkim.pub.key:/dkim.pub.key
     networks:
-      - sl-network
+      - simplelogin
     depends_on:
       migration:
         condition: service_completed_successfully
@@ -62,7 +97,7 @@ services:
     ports:
       - "7777:7777"
     networks:
-      - sl-network
+      - simplelogin
     restart: unless-stopped
     depends_on:
       init:
@@ -81,7 +116,7 @@ services:
     ports:
       - "20381:20381"
     networks:
-      - sl-network
+      - simplelogin
     restart: unless-stopped
     depends_on:
       init:
@@ -98,15 +133,19 @@ services:
       - ./dkim.key:/dkim.key
       - ./dkim.pub.key:/dkim.pub.key
     networks:
-      - sl-network
+      - simplelogin
     restart: unless-stopped
     depends_on:
       init:
         condition: service_completed_successfully
 
+
 networks:
-  sl-network:
+  simplelogin:
     driver: bridge
-    config:
-      subnet: 10.0.0.0/24
-      gateway: 10.0.0.1
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.0.0.0/24
+          gateway: 10.0.0.1
+
