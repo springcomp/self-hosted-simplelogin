@@ -291,10 +291,131 @@ This includes:
 
 ### Postfix
 
-Install and setup postfix [using official instructions](https://github.com/simple-login/app).
+Install `postfix` and `postfix-pgsql`. The latter is used to connect Postfix and the Postgres database in the next steps.
 
-### Nginx
+```bash
+sudo apt-get install -y postfix postfix-pgsql -y
+```
 
+Choose "Internet Site" in Postfix installation window then keep using the proposed value as *System mail name* in the next window.
+
+![](./docs/postfix-installation.png)
+![](./docs/postfix-installation2.png)
+
+Replace `/etc/postfix/main.cf` with the following content. Make sure to replace `mydomain.com` by your domain.
+
+```
+# POSTFIX config file, adapted for SimpleLogin
+smtpd_banner = $myhostname ESMTP $mail_name (Ubuntu)
+biff = no
+
+# appending .domain is the MUA's job.
+append_dot_mydomain = no
+
+# Uncomment the next line to generate "delayed mail" warnings
+#delay_warning_time = 4h
+
+readme_directory = no
+
+# See http://www.postfix.org/COMPATIBILITY_README.html -- default to 2 on
+# fresh installs.
+compatibility_level = 2
+
+# TLS parameters
+smtpd_tls_cert_file=/etc/ssl/certs/ssl-cert-snakeoil.pem
+smtpd_tls_key_file=/etc/ssl/private/ssl-cert-snakeoil.key
+smtpd_tls_session_cache_database = btree:${data_directory}/smtpd_scache
+smtp_tls_session_cache_database = btree:${data_directory}/smtp_scache
+smtp_tls_security_level = may
+smtpd_tls_security_level = may
+
+# See /usr/share/doc/postfix/TLS_README.gz in the postfix-doc package for
+# information on enabling SSL in the smtp client.
+
+alias_maps = hash:/etc/aliases
+mynetworks = 127.0.0.0/8 [::ffff:127.0.0.0]/104 [::1]/128 10.0.0.0/24
+
+# Set your domain here
+mydestination =
+myhostname = app.mydomain.com
+mydomain = mydomain.com
+myorigin = mydomain.com
+
+relay_domains = pgsql:/etc/postfix/pgsql-relay-domains.cf
+transport_maps = pgsql:/etc/postfix/pgsql-transport-maps.cf
+
+# HELO restrictions
+smtpd_delay_reject = yes
+smtpd_helo_required = yes
+smtpd_helo_restrictions =
+    permit_mynetworks,
+    reject_non_fqdn_helo_hostname,
+    reject_invalid_helo_hostname,
+    permit
+
+# Sender restrictions:
+smtpd_sender_restrictions =
+    permit_mynetworks,
+    reject_non_fqdn_sender,
+    reject_unknown_sender_domain,
+    permit
+
+# Recipient restrictions:
+smtpd_recipient_restrictions =
+   reject_unauth_pipelining,
+   reject_non_fqdn_recipient,
+   reject_unknown_recipient_domain,
+   permit_mynetworks,
+   reject_unauth_destination,
+   reject_rbl_client zen.spamhaus.org,
+   reject_rbl_client bl.spamcop.net,
+   permit
+```
+
+Check that the ssl certificates `/etc/ssl/certs/ssl-cert-snakeoil.pem` and `/etc/ssl/private/ssl-cert-snakeoil.key` exist. Depending on the linux distribution you are using they may or may not be present. If they are not, you will need to generate them with this command:
+
+```bash
+openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -keyout /etc/ssl/private/ssl-cert-snakeoil.key -out /etc/ssl/certs/ssl-cert-snakeoil.pem
+```
+
+Create the `/etc/postfix/pgsql-relay-domains.cf` file with the following content.
+Make sure that the database config is correctly set, replace `mydomain.com` with your domain, update 'myuser' and 'mypassword' with your postgres credentials.
+
+```
+# postgres config
+hosts = localhost
+user = myuser
+password = mypassword
+dbname = simplelogin
+
+query = SELECT domain FROM custom_domain WHERE domain='%s' AND verified=true
+    UNION SELECT '%s' WHERE '%s' = 'mydomain.com' LIMIT 1;
+```
+
+Create the `/etc/postfix/pgsql-transport-maps.cf` file with the following content.
+Again, make sure that the database config is correctly set, replace `mydomain.com` with your domain, update 'myuser' and 'mypassword' with your postgres credentials.
+
+```
+# postgres config
+hosts = localhost
+user = myuser
+password = mypassword
+dbname = simplelogin
+
+# forward to smtp:127.0.0.1:20381 for custom domain AND email domain
+query = SELECT 'smtp:127.0.0.1:20381' FROM custom_domain WHERE domain = '%s' AND verified=true
+    UNION SELECT 'smtp:127.0.0.1:20381' WHERE '%s' = 'mydomain.com' LIMIT 1;
+```
+
+Finally, restart Postfix
+
+```bash
+sudo systemctl restart postfix
+```
+
+### Run SimpleLogin Docker containers
+
+1. Clone this repository in `/opt/simplelogin`
 1. Copy `.env.example` to `.env` and set appropriate values.
 
 - set the `DOMAIN` variable to your domain.
@@ -315,7 +436,7 @@ If you are using Azure DNS challenge, update the following values in `.env`:
 - set `AZUREDNS_CLIENTID` to the client id of a service principal with permissions to update the DNS zone.
 - set `AZUREDNS_CLIENTSECRET` to the client secret of a service principal with permissions to update the DNS zone.
 
-2. Run the application:
+1. Run the application:
 
 ```sh
 ./up.sh
