@@ -61,7 +61,6 @@ mydomain.com.	3600	IN	MX	10 app.mydomain.com.
 ### A record
 
 An **A record** that points `app.mydomain.com.` to your server IP.
-If you are using CloudFlare, we recommend to disable the "Proxy" option.
 To verify, the following command
 
 ```bash
