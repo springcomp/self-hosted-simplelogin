@@ -12,7 +12,7 @@ services:
       - ./nginx/conf.d/:/etc/nginx/conf.d/:ro
       - ./nginx/ssl/:/etc/nginx/ssl/:ro
       - ./acme.sh/conf.d/:/root/.acme.sh/:ro
-      - ./acme.sh/www/:/var/www/:rw
+      - ./acme.sh/www/:/var/www/:ro
     ports:
       - "80:80"
       - "443:443"
