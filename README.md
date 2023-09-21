@@ -5,10 +5,269 @@ This is a self-hosted docker-compose configuration for [SimpleLogin](https://sim
 
 ## Prerequisites
 
-This procedure supports Ubuntu 20.04+ servers.
+- a Linux server (either a VM or dedicated server). This doc shows the setup for Ubuntu 18.04 LTS but the steps could be adapted for other popular Linux distributions. As most of components run as Docker container and Docker can be a bit heavy, having at least 2 GB of RAM is recommended. The server needs to have the port 25 (email), 80, 443 (for the webapp), 22 (so you can ssh into it) open.
 
-- Install [docker]()
-- [Enable IPv6 for the default bridge network](https://docs.docker.com/config/daemon/ipv6/#use-ipv6-for-the-default-bridge-network)
+- a domain that you can config the DNS. It could be a sub-domain. In the rest of the doc, let's say it's `mydomain.com` for the email and `app.mydomain.com` for SimpleLogin webapp. Please make sure to replace these values by your domain name whenever they appear in the doc. A trick we use is to download this README file on your computer and replace all `mydomain.com` occurrences by your domain.
+
+Except for the DNS setup that is usually done on your domain registrar interface, all the below steps are to be done on your server. The commands are to run with `bash` (or any bash-compatible shell like `zsh`) being the shell. If you use other shells like `fish`, please make sure to adapt the commands.
+
+### Some utility packages
+
+These packages are used to verify the setup. Install them by:
+
+```bash
+sudo apt update && sudo apt install -y dnsutils
+```
+
+## DNS Configuration
+
+Please note that DNS changes could take up to 24 hours to propagate. In practice, it's a lot faster though (~1 minute or so in our test). In DNS setup, we usually use domain with a trailing dot (`.`) at the end to to force using absolute domain.
+
+### DKIM
+
+From Wikipedia https://en.wikipedia.org/wiki/DomainKeys_Identified_Mail
+
+> DomainKeys Identified Mail (DKIM) is an email authentication method designed to detect forged sender addresses in emails (email spoofing), a technique often used in phishing and email spam.
+
+Setting up DKIM is highly recommended to reduce the chance your emails ending up in the recipient's Spam folder.
+
+First you need to generate a private and public key for DKIM:
+
+```bash
+openssl genrsa -out dkim.key 1024
+openssl rsa -in dkim.key -pubout -out dkim.pub.key
+```
+
+You will need the files `dkim.key` and `dkim.pub.key` for the next steps.
+
+For email gurus, we have chosen 1024 key length instead of 2048 for DNS simplicity as some registrars don't play well with long TXT record.
+
+### MX record
+
+Create a **MX record** that points `mydomain.com.` to `app.mydomain.com.` with priority 10.
+
+To verify if the DNS works, the following command
+
+```bash
+dig @1.1.1.1 mydomain.com mx
+```
+
+should return:
+
+```
+mydomain.com.	3600	IN	MX	10 app.mydomain.com.
+```
+
+### A record
+
+An **A record** that points `app.mydomain.com.` to your server IP.
+If you are using CloudFlare, we recommend to disable the "Proxy" option.
+To verify, the following command
+
+```bash
+dig @1.1.1.1 app.mydomain.com a
+```
+
+should return your server IP.
+
+#### DKIM
+Set up DKIM by adding a TXT record for `dkim._domainkey.mydomain.com.` with the following value:
+
+```
+v=DKIM1; k=rsa; p=PUBLIC_KEY
+```
+
+with `PUBLIC_KEY` being your `dkim.pub.key` but
+- remove the `-----BEGIN PUBLIC KEY-----` and `-----END PUBLIC KEY-----`
+- join all the lines on a single line.
+
+For example, if your `dkim.pub.key` is
+
+```
+-----BEGIN PUBLIC KEY-----
+ab
+cd
+ef
+gh
+-----END PUBLIC KEY-----
+```
+
+then the `PUBLIC_KEY` would be `abcdefgh`.
+
+You can get the `PUBLIC_KEY` by running this command:
+
+```bash
+sed "s/-----BEGIN PUBLIC KEY-----/v=DKIM1; k=rsa; p=/g" $(pwd)/dkim.pub.key | sed 's/-----END PUBLIC KEY-----//g' |tr -d '\n' | awk 1
+```
+
+To verify, the following command
+
+```bash
+dig @1.1.1.1 dkim._domainkey.mydomain.com txt
+```
+
+should return the above value.
+
+### SPF
+
+From Wikipedia https://en.wikipedia.org/wiki/Sender_Policy_Framework
+
+> Sender Policy Framework (SPF) is an email authentication method designed to detect forging sender addresses during the delivery of the email
+
+Similar to DKIM, setting up SPF is highly recommended.
+Add a TXT record for `mydomain.com.` with the value:
+
+```
+v=spf1 mx ~all
+```
+
+What it means is only your server can send email with `@mydomain.com` domain.
+To verify, the following command
+
+```bash
+dig @1.1.1.1 mydomain.com txt
+```
+
+should return the above value.
+
+### DMARC
+
+From Wikipedia https://en.wikipedia.org/wiki/DMARC
+
+> It (DMARC) is designed to give email domain owners the ability to protect their domain from unauthorized use, commonly known as email spoofing
+
+Setting up DMARC is also recommended.
+Add a TXT record for `_dmarc.mydomain.com.` with the following value
+
+```
+v=DMARC1; p=quarantine; adkim=r; aspf=r
+```
+
+This is a `relaxed` DMARC policy. You can also use a more strict policy with `v=DMARC1; p=reject; adkim=s; aspf=s` value.
+
+To verify, the following command
+
+```bash
+dig @1.1.1.1 _dmarc.mydomain.com txt
+```
+
+should return the set value.
+
+For more information on DMARC, please consult https://tools.ietf.org/html/rfc7489
+
+### HSTS
+
+From Wikipedia https://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security
+
+HTTP Strict Transport Security is an extra step you can take to protect your web app from certain man-in-the-middle attacks. It does this by specifying an amount of time (usually a really long one) for which you should only accept HTTPS connections, not HTTP ones.
+
+This repository already enables HSTS, thanks to the following line to the `server` block of the Nginx configuration file:
+
+```
+add_header Strict-Transport-Security "max-age: 31536000; includeSubDomains" always;
+```
+
+(The `max-age` is the time in seconds to not permit a HTTP connection, in this case it's one year.)
+
+### CAA
+
+[Certificate Authority Authorization](https://letsencrypt.org/docs/caa/) is a step you can take to restrict the list of certificate authorities that are allowed to issue certificates for your domains.
+
+Use [SSLMate’s CAA Record Generator](https://sslmate.com/caa/) to create a **CAA record** with the following configuration:
+
+- `flags`: `0`
+- `tag`: `issue`
+- `value`: `"letsencrypt.org"`
+
+To verify if the DNS works, the following command
+
+```bash
+dig @1.1.1.1 mydomain.com caa
+```
+
+should return:
+
+```
+mydomain.com.	3600	IN	CAA	0 issue "letsencrypt.org"
+```
+
+### MTA-STS
+
+[SMTP MTA Strict Transport Security](https://datatracker.ietf.org/doc/html/rfc8461) is an extra step you can take to broadcast the ability of your instance to receive and, optionally enforce, TSL-secure SMTP connections to protect email traffic.
+
+**Note**: a file `/var/www/.well-known/mta-sts.txt` is included in this repository with a content similar to the text shown hereafter.
+You do not need to edit this file as it will be updated upon startup.
+
+```txt
+version: STSv1
+mode: testing
+mx: app.mydomain.com
+max_age: 86400
+```
+It is recommended to start with `mode: testing` for starters to get time to review failure reports.
+
+Create a **TXT record** for `_mta-sts.mydomain.com.` with the following value:
+
+```txt
+v=STSv1; id=UNIX_TIMESTAMP
+```
+
+With `UNIX_TIMESTAMP` being the current date/time.
+
+Use the following command to generate the record:
+
+```bash
+echo "v=STSv1; id=$(date +%s)"
+```
+
+To verify if the DNS works, the following command
+
+```bash
+dig @1.1.1.1 _mta-sts.mydomain.com txt
+```
+
+should return a result similar to this one:
+
+```
+_mta-sts.mydomain.com.	3600	IN	TXT	"v=STSv1; id=1689416399"
+```
+
+### TLSRPT
+
+[SMTP TLS Reporting](https://datatracker.ietf.org/doc/html/rfc8460) is used by SMTP systems to report failures in establishing TLS-secure sessions as broadcast by the MTA-STS configuration.
+
+Configuring MTA-STS in `mode: testing` as shown in the previous section gives you time to review failures from some SMTP senders.
+
+Create a **TXT record** for `_smtp._tls.mydomain.com.` with the following value:
+
+```txt
+v=TSLRPTv1; rua=mailto:YOUR_EMAIL
+```
+
+The TLSRPT configuration at the DNS level allows SMTP senders that fail to initiate TLS-secure sessions to send reports to a particular email address.  We suggest creating a `tls-reports` alias in SimpleLogin for this purpose.
+
+To verify if the DNS works, the following command
+
+```bash
+dig @1.1.1.1 _smtp._tls.mydomain.com txt
+```
+
+should return a result similar to this one:
+
+```
+_smtp._tls.mydomain.com.	3600	IN	TXT	"v=TSLRPTv1; rua=mailto:tls-reports@mydomain.com"
+```
+
+## Docker
+
+If you don't already have Docker installed on your server, please follow the steps on [Docker CE for Ubuntu](https://docs.docker.com/v17.12/install/linux/docker-ce/ubuntu/) to install Docker.
+
+You can also install Docker using the [docker-install](https://github.com/docker/docker-install) script which is
+
+```bash
+curl -fsSL https://get.docker.com | sh
+```
+Enable IPv6 for [the default bridge network](https://docs.docker.com/config/daemon/ipv6/#use-ipv6-for-the-default-bridge-network)
 
 ```json
 {
