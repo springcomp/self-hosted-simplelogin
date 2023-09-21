@@ -419,7 +419,8 @@ sudo systemctl restart postfix
 1. Copy `.env.example` to `.env` and set appropriate values.
 
 - set the `DOMAIN` variable to your domain.
-- set the `POSTGRES_PASSWORD` to a unique password.
+- set the `POSTGRES_USER` variable to match the postgres credentials.
+- set the `POSTGRES_PASSWORD` to match the postgres credentials.
 - set the `FLASK_SECRET` to an arbitrary secret key.
 
 The SSL certs are issued by ZeroSSL using either:
