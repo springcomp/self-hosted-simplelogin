@@ -176,7 +176,7 @@ Use [SSLMate’s CAA Record Generator](https://sslmate.com/caa/) to create a **C
 
 - `flags`: `0`
 - `tag`: `issue`
-- `value`: `"letsencrypt.org"`
+- `value`: `"sectigo.com"`
 
 To verify if the DNS works, the following command
 
@@ -187,7 +187,7 @@ dig @1.1.1.1 mydomain.com caa
 should return:
 
 ```
-mydomain.com.	3600	IN	CAA	0 issue "letsencrypt.org"
+mydomain.com.	3600	IN	CAA	0 issue "sectigo.com"
 ```
 
 ### MTA-STS
