@@ -440,14 +440,7 @@ If you are using Azure DNS challenge, update the following values in `.env`:
 1. Run the application:
 
 ```sh
-./up.sh
-```
-
-The first time the application starts, SSL certificates are requested.
-You can follow the steps using: 
-
-```sh
-docker logs -f acme.sh
+./up.sh && docker logs -f acme.sh
 ```
 
 Once successful, you may need to restart nginx:
