@@ -506,7 +506,7 @@ Then restart the web app to apply: `docker compose restart app`
 - Change the image version in `.env`
 
 ```env
-SL_VERSION=4.6.2-beta
+SL_VERSION=4.6.5-beta
 ```
 
 - Check [migration commands](https://github.com/simple-login/app/blob/master/docs/upgrade.md)
