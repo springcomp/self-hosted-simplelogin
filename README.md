@@ -494,8 +494,8 @@ please go to the database, table "users" and set "lifetime" column to "1" or "TR
 
 ```
 docker compose exec -it postgres psql -U myuser simplelogin
-UPDATE users SET lifetime = TRUE;
-\q
+> UPDATE users SET lifetime = TRUE;
+> \q
 ```
 
 Once you've created all your desired login accounts, add these lines to `/simplelogin.env` to disable further registrations:
