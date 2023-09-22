@@ -7,7 +7,7 @@ This is a self-hosted docker-compose configuration for [SimpleLogin](https://sim
 
 - a Linux server (either a VM or dedicated server). This doc shows the setup for Ubuntu 18.04 LTS but the steps could be adapted for other popular Linux distributions. As most of components run as Docker container and Docker can be a bit heavy, having at least 2 GB of RAM is recommended. The server needs to have the port 25 (email), 80, 443 (for the webapp), 22 (so you can ssh into it) open.
 
-- a domain that you can config the DNS. It could be a sub-domain. In the rest of the doc, let's say it's `mydomain.com` for the email and `app.mydomain.com` for SimpleLogin webapp. Please make sure to replace these values by your domain name whenever they appear in the doc. A trick we use is to download this README file on your computer and replace all `mydomain.com` occurrences by your domain.
+- a domain for which you can config the DNS. It could be a sub-domain. In the rest of the doc, let's say it's `mydomain.com` for the email and `app.mydomain.com` for SimpleLogin webapp. Please make sure to replace these values by your domain name whenever they appear in the doc. A trick we use is to download this README file on your computer and replace all `mydomain.com` occurrences by your domain.
 
 Except for the DNS setup that is usually done on your domain registrar interface, all the below steps are to be done on your server. The commands are to run with `bash` (or any bash-compatible shell like `zsh`) being the shell. If you use other shells like `fish`, please make sure to adapt the commands.
 
@@ -16,7 +16,8 @@ Except for the DNS setup that is usually done on your domain registrar interface
 These packages are used to verify the setup. Install them by:
 
 ```bash
-sudo apt update && sudo apt install -y dnsutils
+sudo apt update \
+  && sudo apt install -y dnsutils
 ```
 
 ## DNS Configuration
@@ -29,7 +30,7 @@ From Wikipedia https://en.wikipedia.org/wiki/DomainKeys_Identified_Mail
 
 > DomainKeys Identified Mail (DKIM) is an email authentication method designed to detect forged sender addresses in emails (email spoofing), a technique often used in phishing and email spam.
 
-Setting up DKIM is highly recommended to reduce the chance your emails ending up in the recipient's Spam folder.
+Setting up DKIM is highly recommended to reduce the chance for your emails ending up in the recipient's Spam folder.
 
 First you need to generate a private and public key for DKIM:
 
@@ -46,7 +47,7 @@ For email gurus, we have chosen 1024 key length instead of 2048 for DNS simplici
 
 Create a **MX record** that points `mydomain.com.` to `app.mydomain.com.` with priority 10.
 
-To verify if the DNS works, the following command
+To verify if the DNS works, the following command:
 
 ```bash
 dig @1.1.1.1 mydomain.com mx
