@@ -485,6 +485,27 @@ Once successful, you will need to restart nginx:
 ```
 docker compose restart nginx
 ```
+## Enjoy!
+
+If all the above steps are successful, open http://app.mydomain.com/ and create your first account!
+
+By default, new accounts are not premium so don't have unlimited alias. To make your account premium,
+please go to the database, table "users" and set "lifetime" column to "1" or "TRUE":
+
+```
+docker compose exec -it postgres psql -U myuser simplelogin
+UPDATE users SET lifetime = TRUE;
+\q
+```
+
+Once you've created all your desired login accounts, add these lines to `/simplelogin.env` to disable further registrations:
+
+```
+DISABLE_REGISTRATION=1
+DISABLE_ONBOARDING=true
+```
+
+Then restart the web app to apply: `docker compose restart app`
 
 ## How-to Upgrade
 
