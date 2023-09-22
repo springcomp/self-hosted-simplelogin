@@ -22,7 +22,52 @@ sudo apt update \
 
 ## DNS Configuration
 
-Please note that DNS changes could take up to 24 hours to propagate. In practice, it's a lot faster though (~1 minute or so in our test). In DNS setup, we usually use domain with a trailing dot (`.`) at the end to to force using absolute domain.
+### MX record
+
+Create a **MX record** that points `mydomain.com.` to `app.mydomain.com.` with priority 10.
+
+To verify if the DNS works, the following command:
+
+```bash
+dig @1.1.1.1 mydomain.com mx
+```
+
+should return:
+
+```
+mydomain.com.	3600	IN	MX	10 app.mydomain.com.
+```
+
+### A record
+
+Create an **A record** that points `app.mydomain.com.` to your server IP.
+To verify, the following command:
+
+```bash
+dig @1.1.1.1 app.mydomain.com a
+```
+
+should return your server IP.
+
+> **Please note** that DNS changes could take up to 24 hours to propagate. In practice, it's a lot faster though (~1 minute or so in our test). In DNS setup, we usually use domain with a trailing dot (`.`) at the end to to force using absolute domain.
+
+### PTR record
+
+From Wikipedia https://en.wikipedia.org/wiki/Reverse_DNS_lookup
+
+> A reverse DNS lookup or reverse DNS resolution (rDNS) is the querying technique of the Domain Name System (DNS) to determine the domain name associated with an IP address – the reverse of the usual "forward" DNS lookup of an IP address from a domain name.
+
+Create a **PTR record** that point
+
+To verify, the following command:
+
+```bash
+dig @1.1.1.1 -x $( ip addr show eth0 | grep 'inet ' | awk '{print $2}' | cut -d'/' -f1)
+```
+
+should return your domain name.
+
+**Note** Some providers require PTR configuration to be done from their dashboard and ignore DNS records. Please, make sure to properly configure reverse DNS for your domain.
 
 ### DKIM
 
@@ -43,35 +88,7 @@ You will need the files `dkim.key` and `dkim.pub.key` for the next steps.
 
 For email gurus, we have chosen 1024 key length instead of 2048 for DNS simplicity as some registrars don't play well with long TXT record.
 
-### MX record
-
-Create a **MX record** that points `mydomain.com.` to `app.mydomain.com.` with priority 10.
-
-To verify if the DNS works, the following command:
-
-```bash
-dig @1.1.1.1 mydomain.com mx
-```
-
-should return:
-
-```
-mydomain.com.	3600	IN	MX	10 app.mydomain.com.
-```
-
-### A record
-
-An **A record** that points `app.mydomain.com.` to your server IP.
-To verify, the following command
-
-```bash
-dig @1.1.1.1 app.mydomain.com a
-```
-
-should return your server IP.
-
-#### DKIM
-Set up DKIM by adding a TXT record for `dkim._domainkey.mydomain.com.` with the following value:
+Set up DKIM by adding a **TXT record** for `dkim._domainkey.mydomain.com.` with the following value:
 
 ```
 v=DKIM1; k=rsa; p=PUBLIC_KEY
@@ -102,7 +119,7 @@ sed "s/-----BEGIN PUBLIC KEY-----/v=DKIM1; k=rsa; p=/g" $(pwd)/dkim.pub.key | \
   tr -d '\n' | awk 1
 ```
 
-To verify, the following command
+To verify, the following command:
 
 ```bash
 dig @1.1.1.1 dkim._domainkey.mydomain.com txt
@@ -117,7 +134,8 @@ From Wikipedia https://en.wikipedia.org/wiki/Sender_Policy_Framework
 > Sender Policy Framework (SPF) is an email authentication method designed to detect forging sender addresses during the delivery of the email
 
 Similar to DKIM, setting up SPF is highly recommended.
-Add a TXT record for `mydomain.com.` with the value:
+
+Create a **TXT record** for `mydomain.com.` with the value:
 
 ```
 v=spf1 mx ~all
@@ -139,7 +157,8 @@ From Wikipedia https://en.wikipedia.org/wiki/DMARC
 > It (DMARC) is designed to give email domain owners the ability to protect their domain from unauthorized use, commonly known as email spoofing
 
 Setting up DMARC is also recommended.
-Add a TXT record for `_dmarc.mydomain.com.` with the following value
+
+Create a **TXT record** for `_dmarc.mydomain.com.` with the following value
 
 ```
 v=DMARC1; p=quarantine; adkim=r; aspf=r
@@ -161,6 +180,8 @@ For more information on DMARC, please consult https://tools.ietf.org/html/rfc748
 
 From Wikipedia https://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security
 
+> HTTP Strict Transport Security (HSTS) is a policy mechanism that helps to protect websites against man-in-the-middle attacks such as protocol downgrade attacks and cookie hijacking.
+
 HTTP Strict Transport Security is an extra step you can take to protect your web app from certain man-in-the-middle attacks. It does this by specifying an amount of time (usually a really long one) for which you should only accept HTTPS connections, not HTTP ones.
 
 This repository already enables HSTS, thanks to the following line to the `server` block of the Nginx configuration file:
@@ -173,6 +194,10 @@ add_header Strict-Transport-Security "max-age: 31536000; includeSubDomains" alwa
 
 ### CAA
 
+From Wikipedia https://en.wikipedia.org/wiki/DNS_Certification_Authority_Authorization
+
+> DNS Certification Authority Authorization (CAA) is an Internet security policy mechanism that allows domain name holders to indicate to certificate authorities whether they are authorized to issue digital certificates for a particular domain name.
+
 [Certificate Authority Authorization](https://letsencrypt.org/docs/caa/) is a step you can take to restrict the list of certificate authorities that are allowed to issue certificates for your domains.
 
 Use [SSLMate’s CAA Record Generator](https://sslmate.com/caa/) to create a **CAA record** with the following configuration:
@@ -181,7 +206,7 @@ Use [SSLMate’s CAA Record Generator](https://sslmate.com/caa/) to create a **C
 - `tag`: `issue`
 - `value`: `"sectigo.com"`
 
-To verify if the DNS works, the following command
+To verify if the DNS works, the following command:
 
 ```bash
 dig @1.1.1.1 mydomain.com caa
@@ -195,10 +220,14 @@ mydomain.com.	3600	IN	CAA	0 issue "sectigo.com"
 
 ### MTA-STS
 
+From Wikipedia https://en.wikipedia.org/wiki/Simple_Mail_Transfer_Protocol#SMTP_MTA_Strict_Transport_Security
+
+> SMTP MTA Strict Transport Security defines a protocol for mail servers to declare their ability to use secure channels in specific files on the server and specific DNS TXT records.
+
 [SMTP MTA Strict Transport Security](https://datatracker.ietf.org/doc/html/rfc8461) is an extra step you can take to broadcast the ability of your instance to receive and, optionally enforce, TSL-secure SMTP connections to protect email traffic.
 
 **Note**: a file `/var/www/.well-known/mta-sts.txt` is included in this repository with a content similar to the text shown hereafter.
-You do not need to edit this file as it will be updated upon startup.
+You **do not need to edit this file** as it will be updated upon startup.
 
 ```txt
 version: STSv1
@@ -222,7 +251,7 @@ Use the following command to generate the record:
 echo "v=STSv1; id=$(date +%s)"
 ```
 
-To verify if the DNS works, the following command
+To verify if the DNS works, the following command:
 
 ```bash
 dig @1.1.1.1 _mta-sts.mydomain.com txt
