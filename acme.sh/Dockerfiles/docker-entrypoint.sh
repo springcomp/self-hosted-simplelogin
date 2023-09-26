@@ -17,6 +17,7 @@ request_zerossl_certificate() {
   ## acme.sh --issue \
   ##   --force \
   ##   --debug --staging --log \
+  ##   --renew-hook "docker restart nginx" \
   ##   --email contact@$DOMAIN \
   ##   --domain *.$DOMAIN --domain $DOMAIN \
   ##   --dns dns_azure

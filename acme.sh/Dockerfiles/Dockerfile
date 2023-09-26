@@ -1,8 +1,6 @@
-# STAGE 0: use base image from Docker Hub and upgrade the existing packages
+# STAGE 0: docker:cli
 # ================================
-ARG IMAGE_TAG="${IMAGE_TAG:-3.18}"
-FROM alpine:${IMAGE_TAG} AS base
-
+FROM docker:cli AS base
 RUN apk --no-cache upgrade --purge
 
 # STAGE 1: copy contents of the original base image to a new image so we don't have overlapping files in layers
@@ -11,9 +9,9 @@ FROM scratch AS alpine
 COPY --from=base / /
 CMD ["/bin/sh"]
 
-# STAGE 2: acmesh-official/acme.sh
+# STAGE 2: acme-official/acme.sh
 # ================================
-FROM alpine AS acme.sh
+FROM alpine as acme.sh
 
 # install dependencies
 RUN apk --no-cache add openssl curl socat

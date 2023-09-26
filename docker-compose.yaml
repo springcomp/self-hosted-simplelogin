@@ -30,23 +30,7 @@ services:
     volumes:
       - ./acme.sh/www/:/var/www/:rw
       - ./acme.sh/conf.d/:/root/.acme.sh/:rw
-    depends_on:
-      - nginx
-
-  restarter:
-    image: docker:cli
-    container_name: nginx-restarter
-    entrypoint: ["/bin/sh","-c"]
-    command:
-      - |
-        while true; do
-          if [ "$(date +'%H')" = '00' ]; then
-            docker restart nginx
-          fi
-          sleep 1h
-        done
-    volumes: ["/var/run/docker.sock:/var/run/docker.sock"]
-    restart: unless-stopped
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       - nginx
 
