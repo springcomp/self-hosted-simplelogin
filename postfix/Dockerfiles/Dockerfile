@@ -19,9 +19,3 @@ FROM alpine AS postfix
 RUN apk --no-cache add postfix postfix-pgsql
 ENTRYPOINT ["/usr/sbin/postfix", "start-fg"]
 
-# STAGE 3: private/postfix
-# ================================
-FROM postfix
-WORKDIR /
-COPY ./docker-entrypoint.sh /docker-entrypoint.sh
-ENTRYPOINT ["/docker-entrypoint.sh"]

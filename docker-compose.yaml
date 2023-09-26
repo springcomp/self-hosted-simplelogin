@@ -142,3 +142,11 @@ services:
     depends_on:
       - email
 
+networks:
+  default:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.0.0.0/24
+          gateway: 10.0.0.1
