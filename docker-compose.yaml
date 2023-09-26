@@ -140,6 +140,27 @@ services:
       init:
         condition: service_completed_successfully
 
+  ## POSTFIX
+  ## =================
+
+  postfix:
+    image: private/postfix:latest
+    build:
+      context: ./postfix/Dockerfiles/
+      dockerfile: Dockerfile
+    container_name: postfix
+    env_file: .env
+    environment:
+      MAIL_CONFIG: /etc/postfix/conf.d/
+    ports:
+      - '25:25'
+      - '587:587'
+    volumes:
+      - ./postfix/conf.d/:/etc/postfix/conf.d:rw
+      - ./acme.sh/conf.d/:/etc/acme.sh/:ro
+    restart: unless-stopped
+    depends_on:
+      - email
 
 networks:
   simplelogin:
