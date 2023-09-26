@@ -16,8 +16,6 @@ services:
     ports:
       - "80:80"
       - "443:443"
-    networks:
-      - simplelogin
     restart: unless-stopped
 
   acme.sh:
@@ -50,8 +48,6 @@ services:
       - ./db:/var/lib/postgresql/data
     ports:
       - "5432:5432"
-    networks:
-      - simplelogin
     restart: unless-stopped
 
   migration:
@@ -64,8 +60,6 @@ services:
       - ./upload:/code/static/upload
       - ./dkim.key:/dkim.key
       - ./dkim.pub.key:/dkim.pub.key
-    networks:
-      - simplelogin
     depends_on:
       postgres:
         condition: service_healthy
@@ -80,8 +74,6 @@ services:
       - ./upload:/code/static/upload
       - ./dkim.key:/dkim.key
       - ./dkim.pub.key:/dkim.pub.key
-    networks:
-      - simplelogin
     depends_on:
       migration:
         condition: service_completed_successfully
@@ -97,8 +89,6 @@ services:
       - ./dkim.pub.key:/dkim.pub.key
     ports:
       - "7777:7777"
-    networks:
-      - simplelogin
     restart: unless-stopped
     depends_on:
       init:
@@ -116,8 +106,6 @@ services:
       - ./dkim.pub.key:/dkim.pub.key
     ports:
       - "20381:20381"
-    networks:
-      - simplelogin
     restart: unless-stopped
     depends_on:
       init:
@@ -133,8 +121,6 @@ services:
       - ./upload:/code/static/upload
       - ./dkim.key:/dkim.key
       - ./dkim.pub.key:/dkim.pub.key
-    networks:
-      - simplelogin
     restart: unless-stopped
     depends_on:
       init:
@@ -163,7 +149,7 @@ services:
       - email
 
 networks:
-  simplelogin:
+  default:
     driver: bridge
     ipam:
       driver: default
