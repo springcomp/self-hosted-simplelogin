@@ -46,8 +46,6 @@ services:
       start_period: 1s
     volumes:
       - ./db:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
     restart: unless-stopped
 
   migration:
@@ -87,8 +85,6 @@ services:
       - ./upload:/code/static/upload
       - ./dkim.key:/dkim.key
       - ./dkim.pub.key:/dkim.pub.key
-    ports:
-      - "7777:7777"
     restart: unless-stopped
     depends_on:
       init:
@@ -104,8 +100,6 @@ services:
       - ./upload:/code/static/upload
       - ./dkim.key:/dkim.key
       - ./dkim.pub.key:/dkim.pub.key
-    ports:
-      - "20381:20381"
     restart: unless-stopped
     depends_on:
       init:
@@ -147,13 +141,4 @@ services:
     restart: unless-stopped
     depends_on:
       - email
-
-networks:
-  default:
-    driver: bridge
-    ipam:
-      driver: default
-      config:
-        - subnet: 10.0.0.0/24
-          gateway: 10.0.0.1
 
