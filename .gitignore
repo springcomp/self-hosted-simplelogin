@@ -6,3 +6,5 @@ upload/
 
 dkim.pub.key
 dkim.key
+
+acme.sh/conf.d/
