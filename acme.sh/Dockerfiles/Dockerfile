@@ -14,7 +14,7 @@ CMD ["/bin/sh"]
 FROM alpine as acme.sh
 
 # install dependencies
-RUN apk --no-cache add openssl curl socat
+RUN apk --no-cache add openssl curl socat bash
 
 # cache busting argument
 ARG ACME_VERSION
@@ -36,5 +36,5 @@ ENTRYPOINT ["/usr/local/bin/acme.sh"]
 FROM acme.sh
 WORKDIR /
 COPY ./docker-entrypoint.sh /docker-entrypoint.sh
-ENTRYPOINT ["/docker-entrypoint.sh"]
+ENTRYPOINT ["bash", "/docker-entrypoint.sh"]
 

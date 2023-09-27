@@ -331,10 +331,13 @@ This includes:
 
 The SSL certs are issued by ZeroSSL using either:
 
-- ACME challenge
-- [Azure DNS challenge](https://github.com/acmesh-official/acme.sh/wiki/dnsapi#37-use-azure-dns)
+- HTTP-01 ACME challenge
+- DNS-01 ACME challenge against [Azure DNS](https://github.com/acmesh-official/acme.sh/wiki/dnsapi#37-use-azure-dns)
 
-Please, uncomment the appropriate section from `./acme.sh/Dockerfiles/docker-entrypoint.sh`.
+Set the following variables in `.env` to appropriate values:
+
+- set the `LE_STAGING` to `true` or `false`.
+- set the `ACME_CHALLENGE` variable to either `DNS-01` (default) or `HTTP-01`.
 
 If you are using Azure DNS challenge, update the following values in `.env`:
 
@@ -357,14 +360,17 @@ so that it uses the correct domain and postgresql credentials. Here are the temp
 Run the application using the following commands:
 
 ```sh
-./up.sh && docker logs -f acme.sh
+./up.sh --build && docker logs -f acme.sh
 ```
 
-Once successful, you will need to restart nginx:
+If you used the staging server to issue certificates, please review and troubleshoot.
+Once you are happy, set the `LE_STAGING` variable in `.env` to `false` and re-issue the certificates:
 
+```sh
+rm -rf acme.sh/conf.d/
+./down.sh && ./up.sh && docker logs -f acme.sh
 ```
-docker compose restart nginx
-```
+
 ## Enjoy!
 
 If all the above steps are successful, open http://app.mydomain.com/ and create your first account!
@@ -401,3 +407,4 @@ SL_VERSION=4.6.2-beta
 ```sh
 ./down.sh && ./up.sh
 ```
+
