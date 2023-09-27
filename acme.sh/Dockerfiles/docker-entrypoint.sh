@@ -1,26 +1,34 @@
 #!/bin/sh
 
 directory_path="/root/.acme.sh/*.${DOMAIN}_ecc"
+challenge="${ACME_CHALLENGE}"
 
 request_zerossl_certificate() {
-  ## echo 'Requesting bootstrap zerossl certificates using ACME challenge'
-  ## 
-  ## acme.sh --issue \
-  ##   --force \
-  ##   --debug --staging --log \
-  ##   --email contact@$DOMAIN \
-  ##   --domain $DOMAIN \
-  ##   --webroot /var/www/acme.sh/
 
-  ## echo 'Requesting bootstrap zerossl certificates using Azure DNS challenge'
-  ## 
-  ## acme.sh --issue \
-  ##   --force \
-  ##   --debug --staging --log \
-  ##   --renew-hook "docker restart nginx" \
-  ##   --email contact@$DOMAIN \
-  ##   --domain *.$DOMAIN --domain $DOMAIN \
-  ##   --dns dns_azure
+  if [ $challenge = 'HTTP-01' ]; then
+
+    echo 'Requesting bootstrap zerossl certificates using HTTP-01 ACME challenge'
+    
+    acme.sh --issue \
+      --force \
+      --debug --staging --log \
+      --renew-hook "docker restart nginx" \
+      --email contact@$DOMAIN \
+      --domain $DOMAIN \
+      --webroot /var/www/acme.sh/
+
+  else
+
+    echo 'Requesting bootstrap zerossl certificates using DNS-01 ACME challenge against Azure DNS'
+
+    acme.sh --issue \
+      --force \
+      --debug --staging --log \
+      --renew-hook "docker restart nginx" \
+      --email contact@$DOMAIN \
+      --domain *.$DOMAIN --domain $DOMAIN \
+      --dns dns_azure
+  fi
 }
 
 
