@@ -212,14 +212,15 @@ To verify if the DNS works, the following command:
 dig @1.1.1.1 mydomain.com caa
 ```
 
-**Warning**: setting up a CAA record will restrict which certificate authority can successfully issue SSL certificates for your domain.
-This will prevent certificate issuance from Let’s Encrypt staging servers. You may want to differ this DNS record until after SSL certificates are successfully issued for your domain.
-
 should return:
 
 ```
 mydomain.com.	3600	IN	CAA	0 issue "sectigo.com"
 ```
+
+**Warning**: setting up a CAA record will restrict which certificate authority can successfully issue SSL certificates for your domain.
+This will prevent certificate issuance from Let’s Encrypt staging servers. You may want to differ this DNS record until after SSL certificates are successfully issued for your domain.
+
 
 ### MTA-STS
 
