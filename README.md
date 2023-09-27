@@ -369,7 +369,7 @@ docker compose restart nginx
 
 If all the above steps are successful, open http://app.mydomain.com/ and create your first account!
 
-By default, new accounts are not premium so don't have unlimited alias. To make your account premium,
+By default, new accounts are not premium so don't have unlimited aliases. To make your account premium,
 please go to the database, table "users" and set "lifetime" column to "1" or "TRUE":
 
 ```
@@ -378,7 +378,7 @@ docker compose exec -it postgres psql -U myuser simplelogin
 > \q
 ```
 
-Once you've created all your desired login accounts, add these lines to `/simplelogin.env` to disable further registrations:
+Once you've created all your desired login accounts, add these lines to `.env` to disable further registrations:
 
 ```
 DISABLE_REGISTRATION=1
