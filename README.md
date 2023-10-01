@@ -138,7 +138,7 @@ Similar to DKIM, setting up SPF is highly recommended.
 Create a **TXT record** for `mydomain.com.` with the value:
 
 ```
-v=spf1 mx ~all
+v=spf1 mx -all
 ```
 
 What it means is only your server can send email with `@mydomain.com` domain.
