@@ -1,0 +1,91 @@
+version: "3.8"
+
+services:
+
+  ## SIMPLE LOGIN
+  ## ============
+  
+  postgres:
+    image: postgres:12.1
+    container_name: sl-db
+    env_file: .env
+    healthcheck:
+      test: [ "CMD", "pg_isready" ]
+      interval: 10s
+      retries: 3
+      start_period: 1s
+    volumes:
+      - ./db:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  migration:
+    image: simplelogin/app:$SL_VERSION
+    command: [ "flask", "db", "upgrade" ]
+    container_name: sl-migration
+    env_file: .env
+    volumes:
+      - ./pgp:/sl/pgp
+      - ./upload:/code/static/upload
+      - ./dkim.key:/dkim.key
+      - ./dkim.pub.key:/dkim.pub.key
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  init:
+    image: simplelogin/app:$SL_VERSION
+    command: [ "python", "init_app.py" ]
+    container_name: sl-init
+    env_file: .env
+    volumes:
+      - ./pgp:/sl/pgp
+      - ./upload:/code/static/upload
+      - ./dkim.key:/dkim.key
+      - ./dkim.pub.key:/dkim.pub.key
+    depends_on:
+      migration:
+        condition: service_completed_successfully
+
+  app:
+    image: simplelogin/app:$SL_VERSION
+    container_name: sl-app
+    env_file: .env
+    volumes:
+      - ./pgp:/sl/pgp
+      - ./upload:/code/static/upload
+      - ./dkim.key:/dkim.key
+      - ./dkim.pub.key:/dkim.pub.key
+    restart: unless-stopped
+    depends_on:
+      init:
+        condition: service_completed_successfully
+
+  email:
+    image: simplelogin/app:$SL_VERSION
+    command: ["python", "email_handler.py"]
+    container_name: sl-email
+    env_file: .env
+    volumes:
+      - ./pgp:/sl/pgp
+      - ./upload:/code/static/upload
+      - ./dkim.key:/dkim.key
+      - ./dkim.pub.key:/dkim.pub.key
+    restart: unless-stopped
+    depends_on:
+      init:
+        condition: service_completed_successfully
+
+  job-runner:
+    image: simplelogin/app:$SL_VERSION
+    command: ["python", "job_runner.py"]
+    container_name: sl-job-runner
+    env_file: .env
+    volumes:
+      - ./pgp:/sl/pgp
+      - ./upload:/code/static/upload
+      - ./dkim.key:/dkim.key
+      - ./dkim.pub.key:/dkim.pub.key
+    restart: unless-stopped
+    depends_on:
+      init:
+        condition: service_completed_successfully
