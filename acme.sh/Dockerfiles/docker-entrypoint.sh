@@ -1,6 +1,5 @@
 #!/bin/bash
 
-directory_path="/root/.acme.sh/*.${DOMAIN}_ecc"
 challenge="${ACME_CHALLENGE}"
 staging="${LE_STAGING}"
 
@@ -35,6 +34,11 @@ renew_zerossl_certificate() {
   echo 'Renewing zerossl certificate...'
   acme.sh --cron
 }
+
+directory_path="/root/.acme.sh/*.${DOMAIN}_ecc"
+if [ $challenge = 'HTTP-01' ]; then
+  directory_path="/root/.acme.sh/${DOMAIN}_ecc"
+fi
 
 [ -d "$directory_path" ] || request_zerossl_certificate
 
