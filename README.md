@@ -57,7 +57,8 @@ From Wikipedia https://en.wikipedia.org/wiki/Reverse_DNS_lookup
 
 > A reverse DNS lookup or reverse DNS resolution (rDNS) is the querying technique of the Domain Name System (DNS) to determine the domain name associated with an IP address – the reverse of the usual "forward" DNS lookup of an IP address from a domain name.
 
-Create a **PTR record** that point
+Create a **PTR record** that point your IP address to your domain name.
+**Important** Some providers require PTR configuration to be done from their dashboard and ignore DNS records. Please, make sure to properly configure reverse DNS lookup for your domain.
 
 To verify, the following command:
 
@@ -66,8 +67,6 @@ dig @1.1.1.1 -x $( ip addr show eth0 | grep 'inet ' | awk '{print $2}' | cut -d'
 ```
 
 should return your domain name.
-
-**Important** Some providers require PTR configuration to be done from their dashboard and ignore DNS records. Please, make sure to properly configure reverse DNS lookup for your domain.
 
 ### DKIM
 
