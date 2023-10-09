@@ -14,7 +14,7 @@ request_zerossl_certificate() {
   if [ $challenge = 'HTTP-01' ]; then
 
     echo 'Requesting bootstrap zerossl certificates using HTTP-01 ACME challenge'
-    params=( "${params[@]}" --domain $DOMAIN \ --webroot /var/www/acme.sh/ )
+    params=( "${params[@]}" --domain $DOMAIN --domain app.$DOMAIN --domain mta-sts.$DOMAIN \ --webroot /var/www/ )
     
   fi
 
@@ -26,6 +26,7 @@ request_zerossl_certificate() {
   fi
 
   eval "${params[@]}"
+  mv /etc/nginx/conf.d/nginx /etc/nginx/conf.d/default.conf
   docker restart nginx
 }
 

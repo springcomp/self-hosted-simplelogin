@@ -11,7 +11,7 @@ services:
     volumes:
       - ./nginx/conf.d/:/etc/nginx/conf.d/:ro
       - ./nginx/ssl/:/etc/nginx/ssl/:ro
-      - ./acme.sh/conf.d/:/root/.acme.sh/:ro
+      - ./acme.sh/conf.d/:/etc/acme.sh/:ro
       - ./acme.sh/www/:/var/www/:ro
     ports:
       - "80:80"
