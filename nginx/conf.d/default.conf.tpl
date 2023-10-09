@@ -11,13 +11,13 @@ server {
     include /etc/nginx/ssl/options-ssl-nginx.conf;
     ssl_dhparam /etc/nginx/ssl/ssl-dhparams.pem;
 
-	return 301 $scheme://app.domain.tld;
+    return 301 $scheme://app.domain.tld;
 }
 
 server {
     server_name  app.domain.tld;
 
-	add_header Strict-Transport-Security "max-age: 31536000; includeSubDomains" always;
+    add_header Strict-Transport-Security "max-age: 31536000; includeSubDomains" always;
 
     listen 443 ssl;
     listen [::]:443 ssl;
