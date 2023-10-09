@@ -15,8 +15,8 @@ readme_directory = no
 compatibility_level = 2
 
 # TLS parameters
-smtpd_tls_cert_file=/etc/acme.sh/*.virtual-server.me_ecc/fullchain.cer
-smtpd_tls_key_file=/etc/acme.sh/*.virtual-server.me_ecc/*.virtual-server.me.key
+smtpd_tls_cert_file=/etc/acme.sh/*.domain.tld_ecc/fullchain.cer
+smtpd_tls_key_file=/etc/acme.sh/*.domain.tld_ecc/*.domain.tld.key
 smtpd_tls_session_cache_database = lmdb:${data_directory}/smtpd_scache
 smtp_tls_session_cache_database = lmdb:${data_directory}/smtp_scache
 smtp_tls_security_level = may
