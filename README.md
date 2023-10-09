@@ -425,7 +425,23 @@ Then restart the web app to apply: `docker compose restart app`
 SL_VERSION=4.6.2-beta
 ```
 
-- Check migration command
+- Check [migration commands](https://github.com/simple-login/app/blob/master/docs/upgrade.md)
+
+For instance, to upgrade from `3.4.0` to `4.6.x-beta`, the following change must be done in `simplelogin-compose.yaml`:
+
+```patch
+    volumes:
+      - ./db:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  migration:
+    image: simplelogin/app:$SL_VERSION
+-   command: [ "flask", "db", "upgrade" ]
++   command: [ "alembic", "upgrade", "head" ]
+    container_name: sl-migration
+    env_file: .env
+```
+
 - Restart containers
 
 ```sh
