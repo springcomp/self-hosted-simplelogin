@@ -352,8 +352,8 @@ If you are using Azure DNS challenge, update the following values in `.env`:
 
 The SSL certificates will be available at the following locations:
 
-- `/etc/acme.sh/*.domain.tld_ecc/fullchain.cer`
-- `/etc/acme.sh/*.domain.tld_ecc/*.domain.tld.key`
+- `/etc/acme.sh/*.mydomain.com_ecc/fullchain.cer`
+- `/etc/acme.sh/*.mydomain.com_ecc/*.domain.tld.key`
 
 
 
@@ -364,8 +364,8 @@ If you are using HTTP-01 challenge, update the SSL certificate and key locations
 
 Specifically, using HTTP-01, the SSL certificates are available at the following locations:
 
-- `/etc/acme.sh/domain.tld_ecc/fullchain.cer`
-- `/etc/acme.sh/domain.tld_ecc/domain.tld.key`
+- `/etc/acme.sh/mydomain.com_ecc/fullchain.cer`
+- `/etc/acme.sh/mydomain.com_ecc/domain.tld.key`
 
 
 3. Run the application:
