@@ -350,7 +350,25 @@ If you are using Azure DNS challenge, update the following values in `.env`:
 - set `AZUREDNS_CLIENTID` to the client id of a service principal with permissions to update the DNS zone.
 - set `AZUREDNS_CLIENTSECRET` to the client secret of a service principal with permissions to update the DNS zone.
 
-1. Run the application:
+The SSL certificates will be available at the following locations:
+
+- `/etc/acme.sh/*.domain.tld_ecc/fullchain.cer`
+- `/etc/acme.sh/*.domain.tld_ecc/*.domain.tld.key`
+
+
+
+If you are using HTTP-01 challenge, update the SSL certificate and key locations in following files:
+
+- `nginx/conf.d/default.conf.tpl`
+- `postfix/conf.d/main.cf.tpl`
+
+Specifically, using HTTP-01, the SSL certificates are available at the following locations:
+
+- `/etc/acme.sh/domain.tld_ecc/fullchain.cer`
+- `/etc/acme.sh/domain.tld_ecc/domain.tld.key`
+
+
+3. Run the application:
 
 The `up.sh` shell script updates important configuration files from templates provided in this repository,
 so that it uses the correct domain and postgresql credentials. Here are the template files:
@@ -413,4 +431,3 @@ SL_VERSION=4.6.2-beta
 ```sh
 ./down.sh && ./up.sh
 ```
-
