@@ -374,9 +374,12 @@ so that it uses the correct domain and postgresql credentials. Here are the temp
 
 - `acme.sh/www/.well-known/mta-sts.txt.tpl`
 - `nginx/conf.d/default.conf.tpl`
+- `postfix/conf.d/aliases`
 - `postfix/conf.d/main.cf.tpl`
 - `postfix/conf.dl/pgsql-relay-domains.cf.tpl`
 - `postfix/conf.dl/pgsql-transport-maps.cf.tpl`
+- `postfix/conf.d/virtual.tpl`
+- `postfix/conf.d/virtual-regexp.tpl`
 
 Run the application using the following commands:
 
