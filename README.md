@@ -399,6 +399,8 @@ You may also want to setup [Certificate Authority Authorization (CAA)](#caa) at 
 
 ## Wildcard subdomains
 
+**Note** the following section documents wildcard certificates and subdomains. You may want to use builtin facility within SimpleLogin to achieve the same results.
+
 This repository suppports issuing wildcard certificates for any number of subdomains using Letsencrypt DNS-01 challenge against Azure DNS.
 It also suppports issuing certificates for the following subdomains `app.mydomain.com` and `mta-sts.mydomain.com` using Letsencrypt HTTP-01 challenge.
 
@@ -414,6 +416,8 @@ Should return:
 ```
 *.mydomain.com. 3600  IN  MX    10 app.mydomain.com
 ```
+
+Alternatively, you can update the `acme.sh/Dockerfiles/docker-entrypoint.sh` script and update the list of subdomains you want to issue SSL certificates for.
 
 The postfix configuration supports virtual aliases using the `postfix/conf.d/virtual` and `postfix/conf.d/virtual-regexp` files.
 Those files are automatically created on startup based upon the corresponding [`postfix/conf.d/virtual.tpl`](./postfix/conf.d/virtual.tpl)
