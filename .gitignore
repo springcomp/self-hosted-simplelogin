@@ -10,6 +10,9 @@ dkim.key
 acme.sh/conf.d/
 acme.sh/www/.well-known/mta-sts.txt
 nginx/conf.d/default.conf
+postfix/conf.d/aliases.lmdb
 postfix/conf.d/main.cf
 postfix/conf.d/pgsql-relay-domains.cf
 postfix/conf.d/pgsql-transport-maps.cf
+postfix/conf.d/virtual.lmdb
+postfix/conf.d/virtual-regexp

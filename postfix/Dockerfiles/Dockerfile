@@ -17,5 +17,7 @@ FROM alpine AS postfix
 
 # install dependencies
 RUN apk --no-cache add postfix postfix-pgsql
-ENTRYPOINT ["/usr/sbin/postfix", "start-fg"]
+
+COPY ./docker-entrypoint.sh /docker-entrypoint.sh
+ENTRYPOINT ["/docker-entrypoint.sh"]
 
