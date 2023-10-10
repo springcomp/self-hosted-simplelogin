@@ -394,6 +394,53 @@ rm -rf acme.sh/conf.d/
 
 You may also want to setup [Certificate Authority Authorization (CAA)](#caa) at this point.
 
+## Wildcard subdomains
+
+This repository suppports issuing wildcard certificates for any number of subdomains using Letsencrypt DNS-01 challenge against Azure DNS.
+It also suppports issuing certificates for the following subdomains `app.mydomain.com` and `mta-sts.mydomain.com` using Letsencrypt HTTP-01 challenge.
+
+If your DNS supports it, you can add a **MX record** to point `*.mydomain.com` to `app.mydomain.com` so that you can receive mails from any number of subdomains.
+To verify, the following command:
+
+```sh
+dig @1.1.1.1 *.mydomain.com mx
+```
+
+Should return:
+
+```
+*.mydomain.com. 3600  IN  MX    10 app.mydomain.com
+```
+
+The postfix configuration supports virtual aliases using the `postfix/conf.d/virtual` and `postfix/conf.d/virtual-regexp` files.
+Those files are automatically created on startup based upon the corresponding [`postfix/conf.d/virtual.tpl`](./postfix/conf.d/virtual.tpl)
+and [`postfix/conf.d/virtual-regexp.tpl`](./postfix/conf.d/virtual-regexp.tpl) template files.
+
+The default configuration is as follows:
+
+### virtual.tpl
+
+The `virtual` file supports postfix `virtual_alias_maps` settings.
+It includes a rule that maps `unknown@mydomain.com` to `contact@mydomain.com` to demonstrate receiving
+and email from a specific address that does not correspond to an existing alias, to another one that does.
+
+```
+unknown@mydomain.com  contact@mydomain.com
+```
+
+### virtual-regexp.tpl
+
+The `virtual-regexp` file supports postfix `virtual_alias_maps` settings.
+It includes a rule that rewrite emails addressed to an arbitrary subdomain, which does not correspond
+to an existing alias, to a new alias that belongs to a directory whose name is taken from the subdomain.
+That alias may be created on the fly if it does not exist.
+
+```
+/^([^@]+)@([^.]+)\.mydomain.com/   $2/$1@mydomain.com
+```
+
+For instance, emails sent to `someone@directory.mydomain.com` will be routed to `directory/someone@mydomain.com` by postfix.
+
 ## Enjoy!
 
 If all the above steps are successful, open http://app.mydomain.com/ and create your first account!
