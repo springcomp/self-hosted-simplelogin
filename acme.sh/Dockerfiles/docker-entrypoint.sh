@@ -1,6 +1,7 @@
 #!/bin/bash
 
 challenge="${ACME_CHALLENGE}"
+dns_api=${ACME_SH_DNS_API}
 staging="${LE_STAGING}"
 
 request_zerossl_certificate() {
@@ -20,11 +21,12 @@ request_zerossl_certificate() {
 
   if [ $challenge = 'DNS-01' ]; then
 
-    echo 'Requesting bootstrap zerossl certificates using DNS-01 ACME challenge against Azure DNS'
-    params=( "${params[@]}" --domain *.$DOMAIN --domain $DOMAIN --dns dns_azure )
+    echo 'Requesting bootstrap zerossl certificates using DNS-01 ACME challenge using acme.sh DNS API'
+    params=( "${params[@]}" --domain *.$DOMAIN --domain $DOMAIN --dns $dns_api )
     
   fi
 
+  echo "${params[@]}"
   eval "${params[@]}"
   mv /etc/nginx/conf.d/nginx /etc/nginx/conf.d/default.conf
   docker restart nginx
