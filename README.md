@@ -335,19 +335,35 @@ This includes:
 The SSL certs are issued by ZeroSSL using either:
 
 - HTTP-01 ACME challenge
-- DNS-01 ACME challenge against [Azure DNS](https://github.com/acmesh-official/acme.sh/wiki/dnsapi#37-use-azure-dns)
+- DNS-01 ACME challenge using acme.sh DNS integration
 
 Set the following variables in `.env` to appropriate values:
 
 - set the `LE_STAGING` to `true` or `false`.
 - set the `ACME_CHALLENGE` variable to either `DNS-01` (default) or `HTTP-01`.
 
-If you are using Azure DNS challenge, update the following values in `.env`:
+If you are using DNS-01 ACME challenge, set `ACME_SH_DNS_API` to one of the
+[supported acme.sh DNS API](https://github.com/acmesh-official/acme.sh#8-automatic-dns-api-integration) plugins.
+
+This repository currently supports
+[Microsoft Azure](https://github.com/acmesh-official/acme.sh/wiki/dnsapi#37-use-azure-dns
+) and
+[Cloudflare](https://github.com/acmesh-official/acme.sh/wiki/dnsapi#a-using-a-restrictive-api-token) DNS integrations.
+
+
+If using Microsoft Azure, update the following values in `.env`:
 
 - set `AZUREDNS_TENANTID` to the Azure tenant hosting the domain DNS zone.
 - set `AZUREDNS_SUSCRIPTIONID` to the Azure subscription hosting the domain DNS zone.
 - set `AZUREDNS_CLIENTID` to the client id of a service principal with permissions to update the DNS zone.
 - set `AZUREDNS_CLIENTSECRET` to the client secret of a service principal with permissions to update the DNS zone.
+
+If using Cloudflare, update the following values in `.env`:
+
+- set `CF_Token` to the Cloudflare API token.
+- set `CF_Zone_ID` to the Cloudflare DNS Zone identifier.
+- set `CF_Account_ID` to your Cloudflare account identifier.
+
 
 The SSL certificates will be available at the following locations:
 
@@ -401,7 +417,7 @@ You may also want to setup [Certificate Authority Authorization (CAA)](#caa) at 
 
 **Note** the following section documents wildcard certificates and subdomains. You may want to use builtin facility within SimpleLogin to achieve the same results.
 
-This repository suppports issuing wildcard certificates for any number of subdomains using Letsencrypt DNS-01 challenge against Azure DNS.
+This repository suppports issuing wildcard certificates for any number of subdomains using Letsencrypt DNS-01 challenge using acme.sh DNS integration.
 It also suppports issuing certificates for the following subdomains `app.mydomain.com` and `mta-sts.mydomain.com` using Letsencrypt HTTP-01 challenge.
 
 If your DNS supports it, you can add a **MX record** to point `*.mydomain.com` to `app.mydomain.com` so that you can receive mails from any number of subdomains.
