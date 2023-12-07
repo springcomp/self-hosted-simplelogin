@@ -7,6 +7,10 @@ staging="${LE_STAGING}"
 
 request_server_certificate() {
 
+  if [ -z "$server" ]; then
+    server="zerossl"
+  fi
+
   params=( acme.sh --issue --force --log --renew-hook \"docker restart nginx\" --email contact@$DOMAIN --server $server )
 
   if [ $staging = 'true' ]; then
