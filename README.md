@@ -354,6 +354,7 @@ Set the following variables in `.env` to appropriate values:
 
 - set the `LE_STAGING` to `true` or `false`.
 - set the `ACME_CHALLENGE` variable to either `DNS-01` (default) or `HTTP-01`.
+- set the `ACME_SERVER` variable to any of the [supported servers by acme.sh](https://github.com/acmesh-official/acme.sh/wiki/Server). Default value is `zerossl`.
 
 If you are using DNS-01 ACME challenge, set `ACME_SH_DNS_API` to one of the
 [supported acme.sh DNS API](https://github.com/acmesh-official/acme.sh#8-automatic-dns-api-integration) plugins.

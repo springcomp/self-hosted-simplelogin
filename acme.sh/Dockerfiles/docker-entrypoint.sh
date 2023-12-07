@@ -1,12 +1,17 @@
 #!/bin/bash
 
 challenge="${ACME_CHALLENGE}"
-dns_api=${ACME_SH_DNS_API}
+dns_api="${ACME_SH_DNS_API}"
+server="${ACME_SERVER}"
 staging="${LE_STAGING}"
 
-request_zerossl_certificate() {
+request_server_certificate() {
 
-  params=( acme.sh --issue --force --log --renew-hook \"docker restart nginx\" --email contact@$DOMAIN )
+  if [ -z "$server" ]; then
+    server="zerossl"
+  fi
+
+  params=( acme.sh --issue --force --log --renew-hook \"docker restart nginx\" --email contact@$DOMAIN --server $server )
 
   if [ $staging = 'true' ]; then
     params=( "${params[@]}" --debug --staging)
@@ -14,16 +19,16 @@ request_zerossl_certificate() {
 
   if [ $challenge = 'HTTP-01' ]; then
 
-    echo 'Requesting bootstrap zerossl certificates using HTTP-01 ACME challenge'
+    echo 'Requesting bootstrap certificates using HTTP-01 ACME challenge'
     params=( "${params[@]}" --domain $DOMAIN --domain app.$DOMAIN --domain mta-sts.$DOMAIN \ --webroot /var/www/ )
-    
+
   fi
 
   if [ $challenge = 'DNS-01' ]; then
 
-    echo 'Requesting bootstrap zerossl certificates using DNS-01 ACME challenge using acme.sh DNS API'
+    echo "Requesting bootstrap $server certificates using DNS-01 ACME challenge using acme.sh DNS API"
     params=( "${params[@]}" --domain *.$DOMAIN --domain $DOMAIN --dns $dns_api )
-    
+
   fi
 
   echo "${params[@]}"
@@ -33,8 +38,8 @@ request_zerossl_certificate() {
 }
 
 
-renew_zerossl_certificate() {
-  echo 'Renewing zerossl certificate...'
+renew_server_certificate() {
+  echo "Renewing $server certificate..."
   acme.sh --cron
 }
 
@@ -43,12 +48,11 @@ if [ $challenge = 'HTTP-01' ]; then
   directory_path="/root/.acme.sh/${DOMAIN}_ecc"
 fi
 
-[ -d "$directory_path" ] || request_zerossl_certificate
+[ -d "$directory_path" ] || request_server_certificate
 
 trap exit TERM
 while :
 do
-  renew_zerossl_certificate
+  renew_server_certificate
   sleep 6h
 done
-
