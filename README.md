@@ -7,7 +7,7 @@ This is a self-hosted docker-compose configuration for [SimpleLogin](https://sim
 
 - a Linux server (either a VM or dedicated server). This doc shows the setup for Ubuntu 18.04 LTS but the steps could be adapted for other popular Linux distributions. As most of components run as Docker container and Docker can be a bit heavy, having at least 2 GB of RAM is recommended. The server needs to have the port 25 (email), 80, 443 (for the webapp), 22 (so you can ssh into it) open.
 
-- a domain for which you can config the DNS. It could be a sub-domain. In the rest of the doc, let's say it's `mydomain.com` for the email and `app.mydomain.com` for SimpleLogin webapp. Please make sure to replace these values by your domain name whenever they appear in the doc. A trick we use is to download this README file on your computer and replace all `mydomain.com` occurrences by your domain.
+- a domain for which you can config the DNS. It could be a sub-domain. In the rest of the doc, let's say it's `mydomain.com` for the email and `app.mydomain.com` for SimpleLogin webapp. Please make sure to replace these values by your domain name and subdomain name whenever they appear in the doc. A trick we use is to download this README file on your computer and replace all `mydomain.com` and `app.mydomain.com` occurrences by your domain.
 
 Except for the DNS setup that is usually done on your domain registrar interface, all the below steps are to be done on your server. The commands are to run with `bash` (or any bash-compatible shell like `zsh`) being the shell. If you use other shells like `fish`, please make sure to adapt the commands.
 
@@ -341,11 +341,12 @@ This includes:
 1. Copy `.env.example` to `.env` and set appropriate values.
 
 - set the `DOMAIN` variable to your domain.
+- set the `SUBDOMAIN` variable to your domain. The default value is `app`.
 - set the `POSTGRES_USER` variable to match the postgres credentials.
 - set the `POSTGRES_PASSWORD` to match the postgres credentials.
 - set the `FLASK_SECRET` to an arbitrary secret key.
 
-The SSL certs are issued by ZeroSSL using either:
+The SSL certs are issued by the ACME server using either:
 
 - HTTP-01 ACME challenge
 - DNS-01 ACME challenge using acme.sh DNS integration

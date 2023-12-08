@@ -7,6 +7,10 @@ staging="${LE_STAGING}"
 
 request_server_certificate() {
 
+  if [ -z "$SUBDOMAIN" ]; then
+    SUBDOMAIN="app"
+  fi
+
   if [ -z "$server" ]; then
     server="zerossl"
   fi
@@ -20,7 +24,7 @@ request_server_certificate() {
   if [ $challenge = 'HTTP-01' ]; then
 
     echo 'Requesting bootstrap certificates using HTTP-01 ACME challenge'
-    params=( "${params[@]}" --domain $DOMAIN --domain app.$DOMAIN --domain mta-sts.$DOMAIN \ --webroot /var/www/ )
+    params=( "${params[@]}" --domain $DOMAIN --domain $SUBDOMAIN.$DOMAIN --domain mta-sts.$DOMAIN \ --webroot /var/www/ )
 
   fi
 
