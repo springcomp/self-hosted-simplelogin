@@ -17,7 +17,7 @@ These packages are used to verify the setup. Install them by:
 
 ```bash
 sudo apt update \
-  && sudo apt install -y dnsutils
+  && sudo apt install -y net-tools dnsutils
 ```
 
 ## DNS Configuration
