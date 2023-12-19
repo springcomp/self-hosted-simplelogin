@@ -16,5 +16,6 @@ postfix/conf.d/aliases.lmdb
 postfix/conf.d/main.cf
 postfix/conf.d/pgsql-relay-domains.cf
 postfix/conf.d/pgsql-transport-maps.cf
+postfix/conf.d/virtual
 postfix/conf.d/virtual.lmdb
 postfix/conf.d/virtual-regexp
