@@ -366,26 +366,27 @@ This repository currently supports
 [Cloudflare](https://github.com/acmesh-official/acme.sh/wiki/dnsapi#a-using-a-restrictive-api-token) DNS integrations.
 
 
+<details><summary>Microsoft Azure DNS configuration</summary>
 If using Microsoft Azure, update the following values in `.env`:
 
 - set `AZUREDNS_TENANTID` to the Azure tenant hosting the domain DNS zone.
 - set `AZUREDNS_SUSCRIPTIONID` to the Azure subscription hosting the domain DNS zone.
 - set `AZUREDNS_CLIENTID` to the client id of a service principal with permissions to update the DNS zone.
 - set `AZUREDNS_CLIENTSECRET` to the client secret of a service principal with permissions to update the DNS zone.
+</details>
 
+<details><summary>Cloudflare DNS configuration</summary>
 If using Cloudflare, update the following values in `.env`:
 
 - set `CF_Token` to the Cloudflare API token.
 - set `CF_Zone_ID` to the Cloudflare DNS Zone identifier.
 - set `CF_Account_ID` to your Cloudflare account identifier.
-
+</details>
 
 The SSL certificates will be available at the following locations:
 
 - `/etc/acme.sh/*.mydomain.com_ecc/fullchain.cer`
 - `/etc/acme.sh/*.mydomain.com_ecc/*.domain.tld.key`
-
-
 
 If you are using HTTP-01 challenge, update the SSL certificate and key locations in following files:
 
