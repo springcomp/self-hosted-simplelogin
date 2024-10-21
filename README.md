@@ -501,7 +501,7 @@ DISABLE_ONBOARDING=true
 
 Then restart the web app to apply: `docker compose restart app`
 
-## How-to Upgrade
+## How-to Upgrade from 3.4.0
 
 - Change the image version in `.env`
 
@@ -524,6 +524,26 @@ For instance, to upgrade from `3.4.0` to `4.6.x-beta`, the following change must
 +   command: [ "alembic", "upgrade", "head" ]
     container_name: sl-migration
     env_file: .env
+```
+
+The following changes must be done in `pgsql-transport-maps.cf`:
+
+```patch
+  dbname = simplelogin
+  
+  query = SELECT 'smtp:127.0.0.1:20381' FROM custom_domain WHERE domain = '%s' AND verified=true
++     UNION SELECT 'smtp:127.0.0.1:20381' FROM public_domain WHERE domain = '%s'
+      UNION SELECT 'smtp:127.0.0.1:20381' WHERE '%s' = 'mydomain.com' LIMIT 1;
+```
+
+The following changes must be done in `pgsql-relay-maps.cf`:
+
+```patch
+  dbname = simplelogin
+  
+  query = SELECT domain FROM custom_domain WHERE domain = '%s' AND verified=true
++     UNION SELECT domain FROM public_domain WHERE domain = '%s'
+      UNION SELECT '%s' WHERE '%s' = 'mydomain.com' LIMIT 1;
 ```
 
 - Restart containers
