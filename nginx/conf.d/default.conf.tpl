@@ -59,6 +59,7 @@ server {
     root /var/www;
 
     listen 443 ssl;
+    listen [::]:443 ssl;
     http2 on;
 
     ssl_certificate /etc/acme.sh/*.domain.tld_ecc/fullchain.cer; # issued by acme.sh
@@ -78,5 +79,6 @@ server {
 
     server_name mta-sts.domain.tld;
     listen 80;
+    listen [::]:80;
     return 404; 
 }

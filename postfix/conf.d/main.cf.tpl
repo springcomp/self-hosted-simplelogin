@@ -26,7 +26,7 @@ smtpd_tls_security_level = may
 # information on enabling SSL in the smtp client.
 
 alias_maps = lmdb:/etc/postfix/conf.d/aliases
-mynetworks = 127.0.0.0/8 [::ffff:127.0.0.0]/104 [::1]/128 10.0.0.0/24
+mynetworks = 127.0.0.0/8 [::ffff:127.0.0.0]/104 [::1]/128 10.0.0.0/24 192.168.0.0/24 [fdba::]/64
 
 # set domain here
 myhostname = app.domain.tld

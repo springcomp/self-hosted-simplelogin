@@ -1,15 +1,17 @@
-version: "3.8"
-
 include:
   - nginx-compose.yaml
   - simple-login-compose.yaml
   - postfix-compose.yaml
 
 networks:
-  default:
+  sl-network:
+    name: sl-network
+    enable_ipv6: true
     driver: bridge
     ipam:
       driver: default
       config:
-        - subnet: 10.0.0.0/24
-          gateway: 10.0.0.1
+        - subnet: 192.168.0.0/24
+          gateway: 192.168.0.1
+        - subnet: "fdba::/64"
+          gateway: "fdba::1"

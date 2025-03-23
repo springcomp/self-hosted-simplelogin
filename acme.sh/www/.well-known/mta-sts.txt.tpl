@@ -1,5 +1,5 @@
 version: STSv1
-mode: testing
+mode: enforce
 mx: app.domain.tld
 max_age: 86400
 

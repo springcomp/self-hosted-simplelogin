@@ -1,12 +1,10 @@
-version: "3.8"
-
 services:
 
   ## SIMPLE LOGIN
   ## ============
   
   postgres:
-    image: postgres:12.1
+    image: postgres:17
     container_name: sl-db
     env_file: .env
     healthcheck:
@@ -17,6 +15,8 @@ services:
     volumes:
       - ./db:/var/lib/postgresql/data
     restart: unless-stopped
+    networks:
+      - sl-network
 
   migration:
     image: simplelogin/app:$SL_VERSION
@@ -31,6 +31,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    networks:
+      - sl-network
 
   init:
     image: simplelogin/app:$SL_VERSION
@@ -45,6 +47,8 @@ services:
     depends_on:
       migration:
         condition: service_completed_successfully
+    networks:
+      - sl-network
 
   app:
     image: simplelogin/app:$SL_VERSION
@@ -59,6 +63,8 @@ services:
     depends_on:
       init:
         condition: service_completed_successfully
+    networks:
+      - sl-network
 
   email:
     image: simplelogin/app:$SL_VERSION
@@ -74,6 +80,8 @@ services:
     depends_on:
       init:
         condition: service_completed_successfully
+    networks:
+      - sl-network
 
   job-runner:
     image: simplelogin/app:$SL_VERSION
@@ -89,3 +97,5 @@ services:
     depends_on:
       init:
         condition: service_completed_successfully
+    networks:
+      - sl-network
