@@ -1,6 +1,6 @@
 # STAGE 0: use base image from Docker Hub and upgrade the existing packages
 # ================================
-ARG IMAGE_TAG="${IMAGE_TAG:-3.18}"
+ARG IMAGE_TAG="${IMAGE_TAG:-3.21}"
 FROM alpine:${IMAGE_TAG} AS base
 
 RUN apk --no-cache upgrade --purge

@@ -7,7 +7,7 @@ This is a self-hosted docker-compose configuration for [SimpleLogin](https://sim
 
 - a Linux server (either a VM or dedicated server). This doc shows the setup for Ubuntu 18.04 LTS but the steps could be adapted for other popular Linux distributions. As most of components run as Docker container and Docker can be a bit heavy, having at least 2 GB of RAM is recommended. The server needs to have the port 25 (email), 80, 443 (for the webapp), 22 (so you can ssh into it) open.
 
-- a domain for which you can config the DNS. It could be a sub-domain. In the rest of the doc, let's say it's `mydomain.com` for the email and `app.mydomain.com` for SimpleLogin webapp. Please make sure to replace these values by your domain name and subdomain name whenever they appear in the doc. A trick we use is to download this README file on your computer and replace all `mydomain.com` and `app.mydomain.com` occurrences by your domain.
+- a domain for which you can config the DNS. It could be a sub-domain. In the rest of the doc, let's say it's `example.com` for the email and `app.example.com` for SimpleLogin webapp. Please make sure to replace these values by your domain name and subdomain name whenever they appear in the doc. A trick we use is to download this README file on your computer and replace all `example.com` and `app.example.com` occurrences by your domain.
 
 Except for the DNS setup that is usually done on your domain registrar interface, all the below steps are to be done on your server. The commands are to run with `bash` (or any bash-compatible shell like `zsh`) being the shell. If you use other shells like `fish`, please make sure to adapt the commands.
 
@@ -17,34 +17,34 @@ These packages are used to verify the setup. Install them by:
 
 ```bash
 sudo apt update \
-  && sudo apt install -y net-tools dnsutils
+  && sudo apt install -y net-tools dnsutils bsdmainutils
 ```
 
 ## DNS Configuration
 
 ### MX record
 
-Create a **MX record** that points `mydomain.com.` to `app.mydomain.com.` with priority 10.
+Create a **MX record** that points `example.com.` to `app.example.com.` with priority 10.
 
 To verify if the DNS works, the following command:
 
 ```bash
-dig @1.1.1.1 mydomain.com mx
+dig @1.1.1.1 example.com mx
 ```
 
 should return:
 
 ```
-mydomain.com.	3600	IN	MX	10 app.mydomain.com.
+example.com.	3600	IN	MX	10 app.example.com.
 ```
 
 ### A record
 
-Create an **A record** that points `app.mydomain.com.` to your server IP.
+Create an **A record** that points `app.example.com.` to your server IP.
 To verify, the following command:
 
 ```bash
-dig @1.1.1.1 app.mydomain.com a
+dig @1.1.1.1 app.example.com a
 ```
 
 should return your server IP.
@@ -87,7 +87,7 @@ You will need the files `dkim.key` and `dkim.pub.key` for the next steps.
 
 For email gurus, we have chosen 1024 key length instead of 2048 for DNS simplicity as some registrars don't play well with long TXT record.
 
-Set up DKIM by adding a **TXT record** for `dkim._domainkey.mydomain.com.` with the following value:
+Set up DKIM by adding a **TXT record** for `dkim._domainkey.example.com.` with the following value:
 
 ```
 v=DKIM1; k=rsa; p=PUBLIC_KEY
@@ -121,7 +121,7 @@ sed "s/-----BEGIN PUBLIC KEY-----/v=DKIM1; k=rsa; p=/g" $(pwd)/dkim.pub.key | \
 To verify, the following command:
 
 ```bash
-dig @1.1.1.1 dkim._domainkey.mydomain.com txt
+dig @1.1.1.1 dkim._domainkey.example.com txt
 ```
 
 should return the above value.
@@ -134,17 +134,17 @@ From Wikipedia https://en.wikipedia.org/wiki/Sender_Policy_Framework
 
 Similar to DKIM, setting up SPF is highly recommended.
 
-Create a **TXT record** for `mydomain.com.` with the value:
+Create a **TXT record** for `example.com.` with the value:
 
 ```
 v=spf1 mx -all
 ```
 
-What it means is only your server can send email with `@mydomain.com` domain.
+What it means is only your server can send email with `@example.com` domain.
 To verify, the following command
 
 ```bash
-dig @1.1.1.1 mydomain.com txt
+dig @1.1.1.1 example.com txt
 ```
 
 should return the above value.
@@ -157,7 +157,7 @@ From Wikipedia https://en.wikipedia.org/wiki/DMARC
 
 Setting up DMARC is also recommended.
 
-Create a **TXT record** for `_dmarc.mydomain.com.` with the following value
+Create a **TXT record** for `_dmarc.example.com.` with the following value
 
 ```
 v=DMARC1; p=quarantine; adkim=r; aspf=r
@@ -168,7 +168,7 @@ This is a `relaxed` DMARC policy. You can also use a more strict policy with `v=
 To verify, the following command
 
 ```bash
-dig @1.1.1.1 _dmarc.mydomain.com txt
+dig @1.1.1.1 _dmarc.example.com txt
 ```
 
 should return the set value.
@@ -208,18 +208,48 @@ Use [SSLMate’s CAA Record Generator](https://sslmate.com/caa/) to create a **C
 To verify if the DNS works, the following command:
 
 ```bash
-dig @1.1.1.1 mydomain.com caa
+dig @1.1.1.1 example.com caa
 ```
 
 should return:
 
 ```
-mydomain.com.	3600	IN	CAA	0 issue "sectigo.com"
+example.com.	3600	IN	CAA	0 issue "sectigo.com"
 ```
 
 **Warning**: setting up a CAA record will restrict which certificate authority can successfully issue SSL certificates for your domain.
 This will prevent certificate issuance from Let’s Encrypt staging servers. You may want to differ this DNS record until after SSL certificates are successfully issued for your domain.
 
+### TLSA
+
+From Wikipedia https://en.wikipedia.org/wiki/DNS-based_Authentication_of_Named_Entities
+
+```bash
+printf '_25._tcp.%s. IN TLSA 3 1 1 %s\n'         app.example.com         $(openssl x509 -in /opt/simplelogin/acme.sh/conf.d/*.example.com_ecc/fullchain.cer -noout -pubkey |
+            openssl pkey -pubin -outform DER |
+            openssl dgst -sha256 -binary |
+            hexdump -ve '/1 "%02x"')
+```
+
+You can use the above command to generate a **TLSA record** for your mail server. You will get a result similar to this one:
+
+```
+_25._tcp.app.example.com. IN TLSA 3 1 1 1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef
+```
+
+Add the DNS record to your DNS provider and verify it with the following command:
+
+```bash
+dig @1.1.1.1 TLSA _25._tcp.app.example.com
+```
+
+should return the above value.
+
+You can use openssl to verify the TLSA record:
+
+```bash
+openssl s_client -starttls smtp -connect app.example.com:25 -dane_tlsa_domain "app.example.com" -dane_tlsa_rrdata "3 1 1 1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+```
 
 ### MTA-STS
 
@@ -234,26 +264,26 @@ similar to the text shown hereafter.
 
 ```txt
 version: STSv1
-mode: testing
-mx: app.mydomain.com
+mode: enforce
+mx: app.example.com
 max_age: 86400
 ```
 
 It is recommended to start with `mode: testing` for starters to get time to review failure reports.
 
 You **do not need to edit this file** as it will be used to derive an appropriate file upon startup.
-However, you _do need_ to create an **A record** that points `mta-sts.mydomain.com.` to your server IP.
+However, you _do need_ to create an **A record** that points `mta-sts.example.com.` to your server IP.
 
 To verify, the following command:
 
 ```bash
-dig @1.1.1.1 mta-sts.mydomain.com a
+dig @1.1.1.1 mta-sts.example.com a
 ```
 
 should return your server IP.
 
 
-Create a **TXT record** for `_mta-sts.mydomain.com.` with the following value:
+Create a **TXT record** for `_mta-sts.example.com.` with the following value:
 
 ```txt
 v=STSv1; id=UNIX_TIMESTAMP
@@ -270,13 +300,13 @@ echo "v=STSv1; id=$(date +%s)"
 To verify if the DNS works, the following command:
 
 ```bash
-dig @1.1.1.1 _mta-sts.mydomain.com txt
+dig @1.1.1.1 _mta-sts.example.com txt
 ```
 
 should return a result similar to this one:
 
 ```
-_mta-sts.mydomain.com.	3600	IN	TXT	"v=STSv1; id=1689416399"
+_mta-sts.example.com.	3600	IN	TXT	"v=STSv1; id=1689416399"
 ```
 
 ### TLSRPT
@@ -285,7 +315,7 @@ _mta-sts.mydomain.com.	3600	IN	TXT	"v=STSv1; id=1689416399"
 
 Configuring MTA-STS in `mode: testing` as shown in the previous section gives you time to review failures from some SMTP senders.
 
-Create a **TXT record** for `_smtp._tls.mydomain.com.` with the following value:
+Create a **TXT record** for `_smtp._tls.example.com.` with the following value:
 
 ```txt
 v=TSLRPTv1; rua=mailto:YOUR_EMAIL
@@ -296,13 +326,13 @@ The TLSRPT configuration at the DNS level allows SMTP senders that fail to initi
 To verify if the DNS works, the following command
 
 ```bash
-dig @1.1.1.1 _smtp._tls.mydomain.com txt
+dig @1.1.1.1 _smtp._tls.example.com txt
 ```
 
 should return a result similar to this one:
 
 ```
-_smtp._tls.mydomain.com.	3600	IN	TXT	"v=TSLRPTv1; rua=mailto:tls-reports@mydomain.com"
+_smtp._tls.example.com.	3600	IN	TXT	"v=TSLRPTv1; rua=mailto:tls-reports@example.com"
 ```
 
 ## Docker
@@ -318,10 +348,16 @@ Enable IPv6 for [the default bridge network](https://docs.docker.com/config/daem
 
 ```json
 {
-  "ipv6": true,
-  "fixed-cidr-v6": "2001:db8:1::/64",
-  "experimental": true,
-  "ip6tables": true
+    "log-driver": "json-file",
+    "log-opts": {
+        "max-size": "20m",
+        "max-file": "3"
+    },
+    "userland-proxy": false,
+    "ipv6": true,
+    "fixed-cidr-v6": "2001:db8:1::/64",
+    "experimental":true,
+    "ip6tables":true
 }
 ```
 
@@ -360,11 +396,13 @@ Set the following variables in `.env` to appropriate values:
 If you are using DNS-01 ACME challenge, set `ACME_SH_DNS_API` to one of the
 [supported acme.sh DNS API](https://github.com/acmesh-official/acme.sh#8-automatic-dns-api-integration) plugins.
 
-This repository currently supports
-[Microsoft Azure](https://github.com/acmesh-official/acme.sh/wiki/dnsapi#37-use-azure-dns
-) and
-[Cloudflare](https://github.com/acmesh-official/acme.sh/wiki/dnsapi#a-using-a-restrictive-api-token) DNS integrations.
+This repository currently supports [PowerDNS](https://github.com/acmesh-official/acme.sh/wiki/dnsapi#5-use-powerdns-embedded-api-to-automatically-issue-cert), [Microsoft Azure](https://github.com/acmesh-official/acme.sh/wiki/dnsapi#37-use-azure-dns) and [Cloudflare](https://github.com/acmesh-official/acme.sh/wiki/dnsapi#a-using-a-restrictive-api-token) DNS integrations.
 
+If using PowerDNS, update the following values in `.env`:
+
+- set `PDNS_Url` to the PowerDNS server API URL.
+- set `PDNS_ServerId` to the PowerDNS server identifier. You can use `localhost` if the PowerDNS server is running on the same host.
+- set `PDNS_Token` to the PowerDNS server API key.
 
 If using Microsoft Azure, update the following values in `.env`:
 
@@ -382,8 +420,8 @@ If using Cloudflare, update the following values in `.env`:
 
 The SSL certificates will be available at the following locations:
 
-- `/etc/acme.sh/*.mydomain.com_ecc/fullchain.cer`
-- `/etc/acme.sh/*.mydomain.com_ecc/*.domain.tld.key`
+- `/etc/acme.sh/*.example.com_ecc/fullchain.cer`
+- `/etc/acme.sh/*.example.com_ecc/*.domain.tld.key`
 
 
 
@@ -394,8 +432,8 @@ If you are using HTTP-01 challenge, update the SSL certificate and key locations
 
 Specifically, using HTTP-01, the SSL certificates are available at the following locations:
 
-- `/etc/acme.sh/mydomain.com_ecc/fullchain.cer`
-- `/etc/acme.sh/mydomain.com_ecc/domain.tld.key`
+- `/etc/acme.sh/example.com_ecc/fullchain.cer`
+- `/etc/acme.sh/example.com_ecc/domain.tld.key`
 
 
 3. Run the application:
@@ -433,19 +471,19 @@ You may also want to setup [Certificate Authority Authorization (CAA)](#caa) at 
 **Note** the following section documents wildcard certificates and subdomains. You may want to use builtin facility within SimpleLogin to achieve the same results.
 
 This repository suppports issuing wildcard certificates for any number of subdomains using Letsencrypt DNS-01 challenge using acme.sh DNS integration.
-It also suppports issuing certificates for the following subdomains `app.mydomain.com` and `mta-sts.mydomain.com` using Letsencrypt HTTP-01 challenge.
+It also suppports issuing certificates for the following subdomains `app.example.com` and `mta-sts.example.com` using Letsencrypt HTTP-01 challenge.
 
-If your DNS supports it, you can add a **MX record** to point `*.mydomain.com` to `app.mydomain.com` so that you can receive mails from any number of subdomains.
+If your DNS supports it, you can add a **MX record** to point `*.example.com` to `app.example.com` so that you can receive mails from any number of subdomains.
 To verify, the following command:
 
 ```sh
-dig @1.1.1.1 *.mydomain.com mx
+dig @1.1.1.1 *.example.com mx
 ```
 
 Should return:
 
 ```
-*.mydomain.com. 3600  IN  MX    10 app.mydomain.com
+*.example.com. 3600  IN  MX    10 app.example.com
 ```
 
 Alternatively, you can update the `acme.sh/Dockerfiles/docker-entrypoint.sh` script and update the list of subdomains you want to issue SSL certificates for.
@@ -459,11 +497,11 @@ The default configuration is as follows:
 ### virtual.tpl
 
 The `virtual` file supports postfix `virtual_alias_maps` settings.
-It includes a rule that maps `unknown@mydomain.com` to `contact@mydomain.com` to demonstrate receiving
+It includes a rule that maps `unknown@example.com` to `contact@example.com` to demonstrate receiving
 and email from a specific address that does not correspond to an existing alias, to another one that does.
 
 ```
-unknown@mydomain.com  contact@mydomain.com
+unknown@example.com  contact@example.com
 ```
 
 ### virtual-regexp.tpl
@@ -474,14 +512,14 @@ to an existing alias, to a new alias that belongs to a directory whose name is t
 That alias may be created on the fly if it does not exist.
 
 ```
-/^([^@]+)@([^.]+)\.mydomain.com/   $2/$1@mydomain.com
+/^([^@]+)@([^.]+)\.example.com/   $2/$1@example.com
 ```
 
-For instance, emails sent to `someone@directory.mydomain.com` will be routed to `directory/someone@mydomain.com` by postfix.
+For instance, emails sent to `someone@directory.example.com` will be routed to `directory/someone@example.com` by postfix.
 
 ## Enjoy!
 
-If all the above steps are successful, open http://app.mydomain.com/ and create your first account!
+If all the above steps are successful, open http://app.example.com/ and create your first account!
 
 By default, new accounts are not premium so don't have unlimited aliases. To make your account premium,
 please go to the database, table "users" and set "lifetime" column to "1" or "TRUE":

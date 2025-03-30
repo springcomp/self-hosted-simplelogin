@@ -27,9 +27,11 @@ RUN apk --no-cache add jq \
  && curl -s "https://raw.githubusercontent.com/acmesh-official/acme.sh/${ACME_VERSION}/acme.sh" > /usr/local/bin/acme.sh \
  && curl -s "https://raw.githubusercontent.com/acmesh-official/acme.sh/${ACME_VERSION}/dnsapi/dns_azure.sh" > /usr/local/bin/dnsapi/dns_azure.sh \
  && curl -s "https://raw.githubusercontent.com/acmesh-official/acme.sh/${ACME_VERSION}/dnsapi/dns_cf.sh" > /usr/local/bin/dnsapi/dns_cf.sh \
+ && curl -s "https://raw.githubusercontent.com/acmesh-official/acme.sh/${ACME_VERSION}/dnsapi/dns_pdns.sh" > /usr/local/bin/dnsapi/dns_pdns.sh \
  && chmod +x /usr/local/bin/acme.sh \
  && chmod +x /usr/local/bin/dnsapi/dns_azure.sh \
- && chmod +x /usr/local/bin/dnsapi/dns_cf.sh
+ && chmod +x /usr/local/bin/dnsapi/dns_cf.sh \
+ && chmod +x /usr/local/bin/dnsapi/dns_pdns.sh
 
 ENTRYPOINT ["/usr/local/bin/acme.sh"]
 
