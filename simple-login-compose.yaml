@@ -19,7 +19,7 @@ services:
       - sl-network
 
   migration:
-    image: simplelogin/app:$SL_VERSION
+    image: simplelogin/app-ci:$SL_VERSION
     command: [ "alembic", "upgrade", "head" ]
     container_name: sl-migration
     env_file: .env
@@ -35,7 +35,7 @@ services:
       - sl-network
 
   init:
-    image: simplelogin/app:$SL_VERSION
+    image: simplelogin/app-ci:$SL_VERSION
     command: [ "python", "init_app.py" ]
     container_name: sl-init
     env_file: .env
@@ -51,7 +51,7 @@ services:
       - sl-network
 
   app:
-    image: simplelogin/app:$SL_VERSION
+    image: simplelogin/app-ci:$SL_VERSION
     container_name: sl-app
     env_file: .env
     volumes:
@@ -67,7 +67,7 @@ services:
       - sl-network
 
   email:
-    image: simplelogin/app:$SL_VERSION
+    image: simplelogin/app-ci:$SL_VERSION
     command: ["python", "email_handler.py"]
     container_name: sl-email
     env_file: .env
@@ -84,7 +84,7 @@ services:
       - sl-network
 
   job-runner:
-    image: simplelogin/app:$SL_VERSION
+    image: simplelogin/app-ci:$SL_VERSION
     command: ["python", "job_runner.py"]
     container_name: sl-job-runner
     env_file: .env
