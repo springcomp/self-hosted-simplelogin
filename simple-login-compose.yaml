@@ -55,6 +55,7 @@ services:
       - ./upload:/code/static/upload
       - ./dkim.key:/dkim.key
       - ./dkim.pub.key:/dkim.pub.key
+    command: ["gunicorn","wsgi:app","-b","0.0.0.0:7777","-w","2","--timeout","30"]
     restart: unless-stopped
     depends_on:
       init:
