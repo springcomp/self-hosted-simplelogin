@@ -357,6 +357,8 @@ Set the following variables in `.env` to appropriate values:
 - set the `ACME_CHALLENGE` variable to either `DNS-01` (default) or `HTTP-01`.
 - set the `ACME_SERVER` variable to any of the [supported servers by acme.sh](https://github.com/acmesh-official/acme.sh/wiki/Server). Default value is `zerossl`.
 
+**DNS-01 ACME challenge**
+
 If you are using DNS-01 ACME challenge, set `ACME_SH_DNS_API` to one of the
 [supported acme.sh DNS API](https://github.com/acmesh-official/acme.sh#8-automatic-dns-api-integration) plugins.
 
@@ -366,26 +368,29 @@ This repository currently supports
 [Cloudflare](https://github.com/acmesh-official/acme.sh/wiki/dnsapi#a-using-a-restrictive-api-token) DNS integrations.
 
 
+<details><summary>Microsoft Azure DNS configuration</summary>
 If using Microsoft Azure, update the following values in `.env`:
 
 - set `AZUREDNS_TENANTID` to the Azure tenant hosting the domain DNS zone.
 - set `AZUREDNS_SUSCRIPTIONID` to the Azure subscription hosting the domain DNS zone.
 - set `AZUREDNS_CLIENTID` to the client id of a service principal with permissions to update the DNS zone.
 - set `AZUREDNS_CLIENTSECRET` to the client secret of a service principal with permissions to update the DNS zone.
+</details>
 
+<details><summary>Cloudflare DNS configuration</summary>
 If using Cloudflare, update the following values in `.env`:
 
 - set `CF_Token` to the Cloudflare API token.
 - set `CF_Zone_ID` to the Cloudflare DNS Zone identifier.
 - set `CF_Account_ID` to your Cloudflare account identifier.
-
+</details>
 
 The SSL certificates will be available at the following locations:
 
 - `/etc/acme.sh/*.mydomain.com_ecc/fullchain.cer`
 - `/etc/acme.sh/*.mydomain.com_ecc/*.domain.tld.key`
 
-
+**HTTP-01 ACME challenge**
 
 If you are using HTTP-01 challenge, update the SSL certificate and key locations in following files:
 
@@ -396,7 +401,6 @@ Specifically, using HTTP-01, the SSL certificates are available at the following
 
 - `/etc/acme.sh/mydomain.com_ecc/fullchain.cer`
 - `/etc/acme.sh/mydomain.com_ecc/domain.tld.key`
-
 
 3. Run the application:
 
@@ -509,7 +513,7 @@ Then restart the web app to apply: `docker compose restart app`
 SL_VERSION=4.6.5-beta
 ```
 
-- Check [migration commands](https://github.com/simple-login/app/blob/master/docs/upgrade.md)
+- Check and apply [migration commands](https://github.com/simple-login/app/blob/master/docs/upgrade.md)
 
 For instance, to upgrade from `3.4.0` to `4.6.x-beta`, the following change must be done in `simplelogin-compose.yaml`:
 
@@ -546,8 +550,30 @@ The following changes must be done in `pgsql-relay-maps.cf`:
       UNION SELECT '%s' WHERE '%s' = 'mydomain.com' LIMIT 1;
 ```
 
+Finally, the following command must be run in the database:
+
+```
+docker exec -it sl-db psql -U myuser simplelogin
+> UPDATE email_log SET alias_id=(SELECT alias_id FROM contact WHERE contact.id = email_log.contact_id);
+> \q
+```
+
+
 - Restart containers
 
 ```sh
 ./down.sh && ./up.sh
 ```
+
+
+After successfully upgrading to `v4.6.x-beta` you might want to upgrade
+to the latest stable version. Change the `SL_IMAGE` and `SL_VERSION`
+variables from the `.env` file:
+
+```
+SL_VERSION=v4.36.6
+SL_IMAGE=app-ci
+```
+
+And restart the containers.
+
