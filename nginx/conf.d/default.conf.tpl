@@ -1,6 +1,8 @@
 server {
     server_name domain.tld;
 
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
     listen 443 ssl;
     listen [::]:443 ssl;
     http2 on;
@@ -17,7 +19,7 @@ server {
 server {
     server_name  app.domain.tld;
 
-    add_header Strict-Transport-Security "max-age: 31536000; includeSubDomains" always;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
 
     listen 443 ssl;
     listen [::]:443 ssl;
@@ -58,6 +60,8 @@ server {
     server_name mta-sts.domain.tld;
     root /var/www;
 
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
     listen 443 ssl;
     http2 on;
 
@@ -78,5 +82,5 @@ server {
 
     server_name mta-sts.domain.tld;
     listen 80;
-    return 404; 
+    return 404;
 }

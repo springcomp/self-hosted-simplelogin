@@ -185,8 +185,8 @@ HTTP Strict Transport Security is an extra step you can take to protect your web
 
 This repository already enables HSTS, thanks to the following line to the `server` block of the Nginx configuration file:
 
-```
-add_header Strict-Transport-Security "max-age: 31536000; includeSubDomains" always;
+```nginx
+add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
 ```
 
 (The `max-age` is the time in seconds to not permit a HTTP connection, in this case it's one year.)
