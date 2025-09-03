@@ -1,7 +1,6 @@
-version: "3.8"
 
 include:
-  - nginx-compose.yaml
+  - traefik-compose.yaml
   - simple-login-compose.yaml
   - postfix-compose.yaml
 

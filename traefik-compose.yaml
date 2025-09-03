@@ -1,0 +1,65 @@
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: '2m'
+    max-file: '5'
+    mode: non-blocking
+
+services:
+  reverse-proxy:
+    image: traefik:${TRAEFIK_VERSION:-latest}
+    restart: ${RESTART_POLICY:-unless-stopped}
+    logging: *default-logging
+    command:
+      # - --log.level=DEBUG
+      - --accesslog=true
+      - --ping=true
+      # - --metrics.prometheus=true
+      - --global.sendanonymoususage=false
+      - --providers.docker.exposedByDefault=false
+      - --providers.docker.network=traefik
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.websecure.address=:443
+      - --entrypoints.websecure.http.tls.certresolver=leresolver
+      - --certificatesresolvers.leresolver.acme.email=${LE_EMAIL:-${SUPPORT_EMAIL:-support@${DOMAIN}}}
+      - --certificatesresolvers.leresolver.acme.storage=/etc/traefik/acme/acme.json
+      - --certificatesresolvers.leresolver.acme.tlschallenge=true
+      - --experimental.plugins.staticresponse.moduleName=github.com/jdel/staticresponse
+      - --experimental.plugins.staticresponse.version=v0.0.1
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - traefik
+    volumes:
+      - /run/docker.sock:/var/run/docker.sock:ro
+      - traefik-acme:/etc/traefik/acme
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+
+  traefik-certificate-exporter:
+    image: ravensorb/traefik-certificate-exporter:latest
+    environment:
+      - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_DATAPATH="/data"
+      - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_FILESPEC="acme.json"
+      - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_OUTPUTPATH="/data"
+      - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_FLAT=true                # Indicates if certificates are exported in sub folders or a single folder
+      - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_RESTARTCONTAINER=false   # Indicates of the containers should be restarted after the export
+      - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_RUNATSTART=true
+      - TRAEFIK_CERTIFICATE_EXPORTER_LOGGINGLEVEL=INFO
+      - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_INCLUDE_DOMAINS=${DOMAIN}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro  # Only needed if you are going to be restarting containers
+      - traefik-acme:/data
+
+volumes:
+  traefik-acme:
+    name: traefik-acme
+
+networks:
+  traefik:
+    driver: bridge
