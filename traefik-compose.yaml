@@ -41,21 +41,6 @@ services:
     healthcheck:
       test: ["CMD", "traefik", "healthcheck", "--ping"]
 
-  traefik-certificate-exporter:
-    image: ravensorb/traefik-certificate-exporter:latest
-    environment:
-      - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_DATAPATH="/data"
-      - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_FILESPEC="acme.json"
-      - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_OUTPUTPATH="/data"
-      - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_FLAT=true                # Indicates if certificates are exported in sub folders or a single folder
-      - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_RESTARTCONTAINER=false   # Indicates of the containers should be restarted after the export
-      - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_RUNATSTART=true
-      - TRAEFIK_CERTIFICATE_EXPORTER_LOGGINGLEVEL=INFO
-      - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_INCLUDE_DOMAINS=${DOMAIN}
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro  # Only needed if you are going to be restarting containers
-      - traefik-acme:/data
-
 volumes:
   traefik-acme:
     name: traefik-acme
