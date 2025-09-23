@@ -23,21 +23,23 @@ services:
     depends_on:
       - email
       - traefik-certificate-exporter
+    labels:
+      - com.github.ravensorb.traefik-certificate-exporter.domain-restart=${DOMAIN}
 
   traefik-certificate-exporter:
     image: ravensorb/traefik-certificate-exporter:latest
     environment:
-      - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_FLAT=true
-      # - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_RESTARTCONTAINER=false
       # - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_DRYRUN=false
+      - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_FLAT=true
+      - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_RESTARTCONTAINER=true
       - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_RUNATSTART=true
       - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_RESOLVERINPATHNAME=false
       - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_DOMAINS_INCLUDE=${DOMAIN}
       - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_DOMAINS_EXCLUDE=exclude     # see: https://github.com/ravensorb/traefik-certificate-exporter/issues/5
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - traefik-acme:/data:ro                   # Location of your acme files
-      - certs:/certs:rw                        # Location you want to export certificates to
+      - traefik-acme:/data:ro         # Location of traefik acme files
+      - certs:/certs:rw               # Location to export certificates to
 
 volumes:
   certs:
