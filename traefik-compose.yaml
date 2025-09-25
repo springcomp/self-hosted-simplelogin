@@ -35,7 +35,7 @@ services:
     networks:
       - traefik
     volumes:
-      - /run/docker.sock:/var/run/docker.sock:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
       - traefik-acme:/etc/traefik/acme
     extra_hosts:
       - host.docker.internal:host-gateway
