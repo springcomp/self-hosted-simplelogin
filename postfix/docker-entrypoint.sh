@@ -9,6 +9,7 @@ PG_PASSWORD="${POSTGRES_PASSWORD:?Need POSTGRES_PASSWORD}"
 # define paths (templates, config)
 TEMPLATE_DIR="${TEMPLATE_DIR:-/templates}"
 MAIL_CONFIG="${MAIL_CONFIG:-/etc/postfix/conf.d}"
+SPAMHAUS_DQS_KEY="${SPAMHAUS_DQS_KEY:-}"
 
 CERT_SUB="/certs/${SUBDOMAIN}.${DOMAIN}"
 CERT_DOMAIN="/certs/${DOMAIN}"
@@ -75,6 +76,18 @@ sed \
 
 [ -f "$MAIL_CONFIG/aliases" ] && postalias $MAIL_CONFIG/aliases
 [ -f "$MAIL_CONFIG/virtual" ] && postmap $MAIL_CONFIG/virtual
+
+if [ -n "$SPAMHAUS_DQS_KEY" ]; then
+  sed -i "s/your_DQS_key/${SPAMHAUS_DQS_KEY}/g" "$MAIL_CONFIG/main.cf"
+
+  if [ -f "$TEMPLATE_DIR/dnsbl-reply-map.tpl" ]; then
+    sed "s/your_DQS_key/${SPAMHAUS_DQS_KEY}/g" \
+      "$TEMPLATE_DIR/dnsbl-reply-map.tpl" > "$MAIL_CONFIG/dnsbl-reply-map"
+    postmap "$MAIL_CONFIG/dnsbl-reply-map"
+  fi
+else
+  sed -i -e '/spamhaus/d' -e '/dnsbl-reply-map/d' "$MAIL_CONFIG/main.cf"
+fi
 
 # hand over to container CMD (postfix start-fg)
 exec "$@"

@@ -71,6 +71,8 @@ myorigin = domain.tld
 relay_domains = pgsql:/etc/postfix/conf.d/pgsql-relay-domains.cf
 transport_maps = pgsql:/etc/postfix/conf.d/pgsql-transport-maps.cf
 
+rbl_reply_maps = lmdb:/etc/postfix/conf.d/dnsbl-reply-map
+
 disable_vrfy_command = yes
 
 # HELO restrictions
@@ -96,7 +98,13 @@ smtpd_recipient_restrictions =
    reject_unknown_recipient_domain,
    permit_mynetworks,
    reject_unauth_destination,
-   reject_rbl_client zen.spamhaus.org,
+   reject_rbl_client your_DQS_key.zen.dq.spamhaus.net=127.0.0.[2..11],
+   reject_rhsbl_sender your_DQS_key.dbl.dq.spamhaus.net=127.0.1.[2..99],
+   reject_rhsbl_helo your_DQS_key.dbl.dq.spamhaus.net=127.0.1.[2..99],
+   reject_rhsbl_reverse_client your_DQS_key.dbl.dq.spamhaus.net=127.0.1.[2..99],
+   reject_rhsbl_sender your_DQS_key.zrd.dq.spamhaus.net=127.0.2.[2..24],
+   reject_rhsbl_helo your_DQS_key.zrd.dq.spamhaus.net=127.0.2.[2..24],
+   reject_rhsbl_reverse_client your_DQS_key.zrd.dq.spamhaus.net=127.0.2.[2..24],
    reject_rbl_client bl.spamcop.net,
    permit
 

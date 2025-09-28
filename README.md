@@ -383,7 +383,29 @@ by setting `LE_DNS_PROVIDER`, and provide further details (i.e. credentials/API-
 
 You can find all supported DNS providers and corresponding instructions here: https://go-acme.github.io/lego/dns/
 
-### Postfix configuration
+SSL-Certificates are requested from [Let`s Encrypt](https://letsencrypt.org/).
+Traefik is (by default) configured to use TLS-ALPN Challenge, because this works out-of-the-box without further
+configuration, as long as DNS resolves to your server.
+
+Disadvantage of this configuration is, that letsencrypt does not allow requesting wildcard certificates via TLS Challenge.
+
+To request a wildcard certificate, edit `.env` file to set `LE_CHALLENGE=dns`, identify your DNS provider
+by setting `LE_DNS_PROVIDER`, and provide further details (i.e. credentials/API-Key, depending on your DNS provider) as ENV.
+
+You can find all supported DNS providers and corresponding instructions here: https://go-acme.github.io/lego/dns/
+
+### Postfix configuration - Spamhaus
+
+Since Spamhaus blocks requests from public (open) DNS-Resolvers (see: https://check.spamhaus.org/returnc/pub) and your postfix container may use 
+an public resolver by default, it is recommended to sign up for the free 
+[Spamhaus Data Query Service](https://www.spamhaus.com/free-trial/sign-up-for-a-free-data-query-service-account/)
+and obtain a Spamhaus DQS key.
+
+Paste this key as `SPAMHAUS_DQS_KEY` in your `.env`
+
+As long as no DQS-key is provided, spamhaus filtering will be disabled.
+
+### Postfix configuration - Virtual aliases
 
 The postfix configuration supports virtual aliases using the `postfix/conf.d/virtual` and `postfix/conf.d/virtual-regexp` files.
 Those files are automatically created on startup based upon the corresponding [`postfix/templates/virtual.tpl`](./postfix/templates/virtual.tpl)
