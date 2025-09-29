@@ -220,20 +220,7 @@ From Wikipedia <https://en.wikipedia.org/wiki/Simple_Mail_Transfer_Protocol#SMTP
 
 [SMTP MTA Strict Transport Security](https://datatracker.ietf.org/doc/html/rfc8461) is an extra step you can take to broadcast the ability of your instance to receive and, optionally enforce, TSL-secure SMTP connections to protect email traffic.
 
-**Note**: a file `/var/www/.well-known/mta-sts.txt.tpl` is included in this repository with a content
-similar to the text shown hereafter.
-
-```txt
-version: STSv1
-mode: testing
-mx: app.mydomain.com
-max_age: 86400
-```
-
-It is recommended to start with `mode: testing` for starters to get time to review failure reports.
-
-You **do not need to edit this file** as it will be used to derive an appropriate file upon startup.
-However, you _do need_ to create an **A record** that points `mta-sts.mydomain.com.` to your server IP.
+Create an **A record** that points `mta-sts.mydomain.com.` to your server IP.
 
 To verify, the following command:
 

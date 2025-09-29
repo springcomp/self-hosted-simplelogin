@@ -1,4 +1,9 @@
 
+# If there is already a traefik container running on your host, you can comment out the first include line.
+# But make sure that...
+# - container `sl-app` can join traefiks network, defined in traefic static config `providers.docker.network`
+# - container `traefik-certificate-exporter` can access traefiks acme-storage
+
 include:
   - traefik-compose.yaml
   - simple-login-compose.yaml

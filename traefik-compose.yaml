@@ -26,6 +26,7 @@ services:
       - --certificatesresolvers.leresolver.acme.email=${LE_EMAIL:-${SUPPORT_EMAIL:-support@${DOMAIN}}}
       - --certificatesresolvers.leresolver.acme.storage=/etc/traefik/acme/acme.json
       - --certificatesresolvers.leresolver.acme.tlschallenge=true
+      ## load plugin to support static response on "mta-sts" subdomain
       - --experimental.plugins.staticresponse.moduleName=github.com/jdel/staticresponse
       - --experimental.plugins.staticresponse.version=v0.0.1
     ports:

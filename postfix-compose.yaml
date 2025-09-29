@@ -43,6 +43,7 @@ services:
 
 volumes:
   certs:
-  traefik-acme:
-    name: traefik-acme
-    external: true
+  ## Uncomment the next lines, if traefik is running outside this project
+  # traefik-acme:
+    # name: traefik-acme
+    # external: true

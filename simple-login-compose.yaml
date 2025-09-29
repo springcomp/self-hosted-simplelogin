@@ -78,6 +78,9 @@ services:
       - traefik.http.routers.mta-sts.middlewares=mta-sts
       - traefik.http.middlewares.mta-sts.plugin.staticresponse.StatusCode=200
       - "traefik.http.middlewares.mta-sts.plugin.staticresponse.Body=version: STSv1\nmode: testing\nmx: ${SUBDOMAIN:-app}.${DOMAIN}\nmax_age: 86400"
+      ## Note: The following parameters have to be set in traefik static config, to activate `staticresponse` plugin:
+      # experimental.plugins.staticresponse.moduleName=github.com/jdel/staticresponse
+      # experimental.plugins.staticresponse.version=v0.0.1
 
   email:
     image: simplelogin/$SL_IMAGE:$SL_VERSION
