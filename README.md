@@ -382,6 +382,14 @@ Should return:
 *.mydomain.com. 3600  IN  MX    10 app.mydomain.com
 ```
 
+To change the [traefik configuration](./traefik-compose.yaml) from TLS challenge to DNS challenge, 
+comment out the two lines "Variant 1: TLS-Challenge", 
+enable the two lines "Variant 2: DNS-Challenge", and add specific configuration (identifier and ENV) for your DNS provider.
+You can find all required configuration details here: https://go-acme.github.io/lego/dns/
+
+As second step, edit [simple-login-compose.yaml](./simple-login-compose.yaml), and enable the two lines in `labels:` section of the `sl-app`
+container, defining main/sans certificate details.
+
 ### Postfix configuration
 
 The postfix configuration supports virtual aliases using the `postfix/conf.d/virtual` and `postfix/conf.d/virtual-regexp` files.

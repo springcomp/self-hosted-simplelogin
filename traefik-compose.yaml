@@ -23,12 +23,20 @@ services:
       - --entrypoints.web.http.redirections.entrypoint.scheme=https
       - --entrypoints.websecure.address=:443
       - --entrypoints.websecure.http.tls.certresolver=leresolver
-      - --certificatesresolvers.leresolver.acme.email=${LE_EMAIL:-${SUPPORT_EMAIL:-support@${DOMAIN}}}
       - --certificatesresolvers.leresolver.acme.storage=/etc/traefik/acme/acme.json
+      ## Variant 1: TLS-Challenge (no specific DNS-Credentials needed, but no wildcard possible)
       - --certificatesresolvers.leresolver.acme.tlschallenge=true
+      - --certificatesresolvers.leresolver.acme.email=${LE_EMAIL:-${SUPPORT_EMAIL:-support@${DOMAIN}}}
+      ## Variant 2: DNS-Challenge (here: Ionos)
+      #- --certificatesresolvers.leresolver.acme.dnschallenge=true
+      #- --certificatesresolvers.leresolver.acme.dnschallenge.provider=ionos
+
       ## load plugin to support static response on "mta-sts" subdomain
       - --experimental.plugins.staticresponse.moduleName=github.com/jdel/staticresponse
       - --experimental.plugins.staticresponse.version=v0.0.1
+    environment:
+      ## see https://go-acme.github.io/lego/dns/ for required ENV Vars, depending on your DNS provider
+      - IONOS_API_KEY=abcde12345
     ports:
       - "80:80"
       - "443:443"
