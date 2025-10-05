@@ -24,7 +24,7 @@ services:
       - email
       - traefik-certificate-exporter
     labels:
-      - com.github.ravensorb.traefik-certificate-exporter.domain-restart=${SUBDOMAIN:-app}.${DOMAIN}
+      - com.github.ravensorb.traefik-certificate-exporter.domain-restart=${SUBDOMAIN:-app}.${DOMAIN},${DOMAIN}
 
   traefik-certificate-exporter:
     image: ravensorb/traefik-certificate-exporter:latest
@@ -34,7 +34,7 @@ services:
       - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_RESTARTCONTAINER=true
       - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_RUNATSTART=true
       - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_RESOLVERINPATHNAME=false
-      - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_DOMAINS_INCLUDE=${SUBDOMAIN:-app}.${DOMAIN}
+      - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_DOMAINS_INCLUDE=${DOMAIN},${SUBDOMAIN:-app}.${DOMAIN},*.${DOMAIN}
       - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_DOMAINS_EXCLUDE=exclude     # see: https://github.com/ravensorb/traefik-certificate-exporter/issues/5
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
