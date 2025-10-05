@@ -317,8 +317,8 @@ Run SimpleLogin from Docker containers:
 
     - set the `DOMAIN` variable to your domain.
     - set the `SUBDOMAIN` variable to your domain. The default value is `app`.
-    - set the `POSTGRES_USER` variable to match the postgres credentials.
-    - set the `POSTGRES_PASSWORD` to match the postgres credentials.
+    - set the `POSTGRES_USER` variable to match the postgres credentials (when starting from scratch, use `simplelogin`).
+    - set the `POSTGRES_PASSWORD` to match the postgres credentials (when starting from scratch, set to a random key).
     - set the `FLASK_SECRET` to an arbitrary secret key.
 
 #### Running the application
@@ -328,8 +328,8 @@ so that it uses the correct domain and postgresql credentials. Here are the temp
 
 - `postfix/conf.d/aliases`
 - `postfix/conf.d/main.cf.tpl`
-- `postfix/conf.dl/pgsql-relay-domains.cf.tpl`
-- `postfix/conf.dl/pgsql-transport-maps.cf.tpl`
+- `postfix/conf.d/pgsql-relay-domains.cf.tpl`
+- `postfix/conf.d/pgsql-transport-maps.cf.tpl`
 - `postfix/conf.d/virtual.tpl`
 - `postfix/conf.d/virtual-regexp.tpl`
 
@@ -343,7 +343,7 @@ You may want to setup [Certificate Authority Authorization (CAA)](#caa) at this 
 
 ## Next steps
 
-If all the above steps are successful, open <http://app.mydomain.com/> and create your first account!
+If all the above steps are successful, open <https://app.mydomain.com/> and create your first account!
 
 By default, new accounts are not premium so don't have unlimited aliases. To make your account premium,
 please go to the database, table "users" and set "lifetime" column to "1" or "TRUE":
@@ -361,7 +361,7 @@ DISABLE_REGISTRATION=1
 DISABLE_ONBOARDING=true
 ```
 
-Then restart the web app to apply: `docker compose restart app`
+Then, to restart the web app, apply: `docker compose restart app`
 
 ## Miscellaneous
 
@@ -382,13 +382,16 @@ Should return:
 *.mydomain.com. 3600  IN  MX    10 app.mydomain.com
 ```
 
-To change the [traefik configuration](./traefik-compose.yaml) from TLS challenge to DNS challenge, 
-comment out the two lines "Variant 1: TLS-Challenge", 
-enable the two lines "Variant 2: DNS-Challenge", and add specific configuration (identifier and ENV) for your DNS provider.
-You can find all required configuration details here: https://go-acme.github.io/lego/dns/
+SSL-Certificates are requested from [Let`s Encrypt](https://letsencrypt.org/).
+Traefik is (by default) configured to use TLS-ALPN Challenge, because this works out-of-the-box without further
+configuration, as long as DNS resolves to your server.
 
-As second step, edit [simple-login-compose.yaml](./simple-login-compose.yaml), and enable the two lines in `labels:` section of the `sl-app`
-container, defining main/sans certificate details.
+Disadvantage of this configuration is, that letsencrypt does not allow requesting wildcard certificates via TLS Challenge.
+
+To request a wildcard certificate, edit `.env` file to set `LE_CHALLENGE=dns`, identify your DNS provider
+by setting `LE_PROVIDER`, and provide further details (i.e. credentials/API-Key, depending on your DNS provider) as ENV.
+
+You can find all supported DNS providers and corresponding instructions here: https://go-acme.github.io/lego/dns/
 
 ### Postfix configuration
 
