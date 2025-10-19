@@ -8,6 +8,7 @@ x-logging: &default-logging
 services:
   reverse-proxy:
     image: traefik:${TRAEFIK_VERSION:-latest}
+    container_name: traefik
     restart: ${RESTART_POLICY:-unless-stopped}
     logging: *default-logging
     command:
@@ -25,9 +26,13 @@ services:
       - --entrypoints.websecure.http.tls.certresolver=${LE_CHALLENGE:-tls}
       - --certificatesresolvers.tls.acme.storage=/etc/traefik/acme/acme-tls.json
       - --certificatesresolvers.tls.acme.email=${LE_EMAIL:-${SUPPORT_EMAIL:-support@${DOMAIN}}}
+      ## uncomment for LE-STAGING server, to avoid exceeding LetsEncrypt quota when fiddling with a new configuration
+      #- --certificatesresolvers.tls.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory
       - --certificatesresolvers.tls.acme.tlschallenge=true
       - --certificatesresolvers.dns.acme.storage=/etc/traefik/acme/acme-dns.json
       - --certificatesresolvers.dns.acme.email=${LE_EMAIL:-${SUPPORT_EMAIL:-support@${DOMAIN}}}
+      ## uncomment for LE-STAGING server, to avoid exceeding LetsEncrypt quota when fiddling with a new configuration
+      #- --certificatesresolvers.dns.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory
       - --certificatesresolvers.dns.acme.dnschallenge=true
       - --certificatesresolvers.dns.acme.dnschallenge.provider=${LE_DNS_PROVIDER}
       ## load plugin to support static response on "mta-sts" subdomain

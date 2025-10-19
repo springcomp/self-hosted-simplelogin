@@ -28,6 +28,7 @@ services:
 
   traefik-certificate-exporter:
     image: ravensorb/traefik-certificate-exporter:latest
+    container_name: cert-exporter
     environment:
       # - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_DRYRUN=false
       - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_FLAT=true
