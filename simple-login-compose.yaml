@@ -54,6 +54,9 @@ services:
       - ./upload:/code/static/upload
       - ./dkim.key:/dkim.key
       - ./dkim.pub.key:/dkim.pub.key
+    networks:
+      - traefik
+      - default
     restart: unless-stopped
     depends_on:
       init:
