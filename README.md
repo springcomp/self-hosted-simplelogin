@@ -181,13 +181,7 @@ From Wikipedia <https://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security>
 
 HTTP Strict Transport Security is an extra step you can take to protect your web app from certain man-in-the-middle attacks. It does this by specifying an amount of time (usually a really long one) for which you should only accept HTTPS connections, not HTTP ones.
 
-This repository already enables HSTS, thanks to the following line to the `server` block of the Nginx configuration file:
-
-```nginx
-add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
-```
-
-(The `max-age` is the time in seconds to not permit a HTTP connection, in this case it's one year.)
+This repository already enables HSTS, thanks to the traefik configuration for the simplelogin container
 
 ### CAA
 
@@ -226,20 +220,7 @@ From Wikipedia <https://en.wikipedia.org/wiki/Simple_Mail_Transfer_Protocol#SMTP
 
 [SMTP MTA Strict Transport Security](https://datatracker.ietf.org/doc/html/rfc8461) is an extra step you can take to broadcast the ability of your instance to receive and, optionally enforce, TSL-secure SMTP connections to protect email traffic.
 
-**Note**: a file `/var/www/.well-known/mta-sts.txt.tpl` is included in this repository with a content
-similar to the text shown hereafter.
-
-```txt
-version: STSv1
-mode: testing
-mx: app.mydomain.com
-max_age: 86400
-```
-
-It is recommended to start with `mode: testing` for starters to get time to review failure reports.
-
-You **do not need to edit this file** as it will be used to derive an appropriate file upon startup.
-However, you _do need_ to create an **A record** that points `mta-sts.mydomain.com.` to your server IP.
+Create an **A record** that points `mta-sts.mydomain.com.` to your server IP.
 
 To verify, the following command:
 
@@ -325,8 +306,7 @@ Enable IPv6 for [the default bridge network](https://docs.docker.com/config/daem
 This procedure will guide you through running the entire stack using Docker containers.
 This includes:
 
-- nginx
-- [acme.sh](https://acme.sh) to request and issue SSL certs.
+- traefik
 - The [SimpleLogin app](https://github.com/simple-login/app) containers
 - postfix
 
@@ -337,100 +317,33 @@ Run SimpleLogin from Docker containers:
 
     - set the `DOMAIN` variable to your domain.
     - set the `SUBDOMAIN` variable to your domain. The default value is `app`.
-    - set the `POSTGRES_USER` variable to match the postgres credentials.
-    - set the `POSTGRES_PASSWORD` to match the postgres credentials.
+    - set the `POSTGRES_USER` variable to match the postgres credentials (when starting from scratch, use `simplelogin`).
+    - set the `POSTGRES_PASSWORD` to match the postgres credentials (when starting from scratch, set to a random key).
     - set the `FLASK_SECRET` to an arbitrary secret key.
-
-1. Set the following variables in `.env` to appropriate values:
-
-    - set the `LE_STAGING` to `true` or `false`.
-    - set the `ACME_CHALLENGE` variable to either `DNS-01` (default) or `HTTP-01`.
-    - set the `ACME_SERVER` variable to any of the [supported servers by acme.sh](https://github.com/acmesh-official/acme.sh/wiki/Server). Default value is `zerossl`.
-
-The SSL certs are issued by the ACME server using either:
-
-- HTTP-01 ACME challenge
-- DNS-01 ACME challenge using acme.sh DNS integration
-
-### DNS-01 ACME challenge
-
-If you are using DNS-01 ACME challenge, set `ACME_SH_DNS_API` to one of the
-[supported acme.sh DNS API](https://github.com/acmesh-official/acme.sh#8-automatic-dns-api-integration) plugins.
-
-This repository currently supports
-[Microsoft Azure](https://github.com/acmesh-official/acme.sh/wiki/dnsapi#37-use-azure-dns
-) and
-[Cloudflare](https://github.com/acmesh-official/acme.sh/wiki/dnsapi#a-using-a-restrictive-api-token) DNS integrations.
-
-<details><summary>Microsoft Azure DNS configuration</summary>
-If using Microsoft Azure, update the following values in `.env`:
-
-- set `AZUREDNS_TENANTID` to the Azure tenant hosting the domain DNS zone.
-- set `AZUREDNS_SUSCRIPTIONID` to the Azure subscription hosting the domain DNS zone.
-- set `AZUREDNS_CLIENTID` to the client id of a service principal with permissions to update the DNS zone.
-- set `AZUREDNS_CLIENTSECRET` to the client secret of a service principal with permissions to update the DNS zone.
-
-</details>
-
-<details><summary>Cloudflare DNS configuration</summary>
-If using Cloudflare, update the following values in `.env`:
-
-- set `CF_Token` to the Cloudflare API token.
-- set `CF_Zone_ID` to the Cloudflare DNS Zone identifier.
-- set `CF_Account_ID` to your Cloudflare account identifier.
-
-</details>
-
-The SSL certificates will be available at the following locations inside the Docker containers:
-
-- `/etc/acme.sh/*.mydomain.com_ecc/fullchain.cer`
-- `/etc/acme.sh/*.mydomain.com_ecc/*.mydomain.com.key`
-
-### HTTP-01 ACME challenge
-
-If you are using HTTP-01 challenge, update the SSL certificate and key locations in following files:
-
-- `nginx/conf.d/default.conf.tpl`
-- `postfix/conf.d/main.cf.tpl`
-
-Specifically, using HTTP-01, the SSL certificates are available at the following locations inside the Docker containers:
-
-- `/etc/acme.sh/mydomain.com_ecc/fullchain.cer`
-- `/etc/acme.sh/mydomain.com_ecc/mydomain.com.key`
 
 #### Running the application
 
 The `up.sh` shell script updates important configuration files from templates provided in this repository,
 so that it uses the correct domain and postgresql credentials. Here are the template files:
 
-- `acme.sh/www/.well-known/mta-sts.txt.tpl`
-- `nginx/conf.d/default.conf.tpl`
 - `postfix/conf.d/aliases`
 - `postfix/conf.d/main.cf.tpl`
-- `postfix/conf.dl/pgsql-relay-domains.cf.tpl`
-- `postfix/conf.dl/pgsql-transport-maps.cf.tpl`
+- `postfix/conf.d/pgsql-relay-domains.cf.tpl`
+- `postfix/conf.d/pgsql-transport-maps.cf.tpl`
 - `postfix/conf.d/virtual.tpl`
 - `postfix/conf.d/virtual-regexp.tpl`
 
 Run the application using the following commands:
 
 ```sh
-./up.sh --build && docker logs -f acme.sh
+./up.sh --build && docker logs -f
 ```
 
-If you used the staging server to issue certificates, please review and troubleshoot.
-Once you are happy, set the `LE_STAGING` variable in `.env` to `false` and re-issue the certificates:
-
-```sh
-rm -rf acme.sh/conf.d/
-./down.sh && ./up.sh && docker logs -f acme.sh
-```
-
-You may also want to setup [Certificate Authority Authorization (CAA)](#caa) at this point.
+You may want to setup [Certificate Authority Authorization (CAA)](#caa) at this point.
 
 ## Next steps
 
-If all the above steps are successful, open <http://app.mydomain.com/> and create your first account!
+If all the above steps are successful, open <https://app.mydomain.com/> and create your first account!
 
 By default, new accounts are not premium so don't have unlimited aliases. To make your account premium,
 please go to the database, table "users" and set "lifetime" column to "1" or "TRUE":
@@ -448,16 +361,13 @@ DISABLE_REGISTRATION=1
 DISABLE_ONBOARDING=true
 ```
 
-Then restart the web app to apply: `docker compose restart app`
+Then, to restart the web app, apply: `docker compose restart app`
 
 ## Miscellaneous
 
 ### Wildcard subdomains
 
 **Note** the following section documents wildcard certificates and subdomains. You may want to use builtin facility within SimpleLogin to achieve the same results.
-
-This repository suppports issuing wildcard certificates for any number of subdomains using Letsencrypt DNS-01 challenge using acme.sh DNS integration.
-It also suppports issuing certificates for the following subdomains `app.mydomain.com` and `mta-sts.mydomain.com` using Letsencrypt HTTP-01 challenge.
 
 If your DNS supports it, you can add a **MX record** to point `*.mydomain.com` to `app.mydomain.com` so that you can receive mails from any number of subdomains.
 To verify, the following command:
@@ -472,7 +382,16 @@ Should return:
 *.mydomain.com. 3600  IN  MX    10 app.mydomain.com
 ```
 
-Alternatively, you can update the `acme.sh/Dockerfiles/docker-entrypoint.sh` script and update the list of subdomains you want to issue SSL certificates for.
+SSL-Certificates are requested from [Let`s Encrypt](https://letsencrypt.org/).
+Traefik is (by default) configured to use TLS-ALPN Challenge, because this works out-of-the-box without further
+configuration, as long as DNS resolves to your server.
+
+Disadvantage of this configuration is, that letsencrypt does not allow requesting wildcard certificates via TLS Challenge.
+
+To request a wildcard certificate, edit `.env` file to set `LE_CHALLENGE=dns`, identify your DNS provider
+by setting `LE_DNS_PROVIDER`, and provide further details (i.e. credentials/API-Key, depending on your DNS provider) as ENV.
+
+You can find all supported DNS providers and corresponding instructions here: https://go-acme.github.io/lego/dns/
 
 ### Postfix configuration
 

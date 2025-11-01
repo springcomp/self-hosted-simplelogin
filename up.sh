@@ -6,23 +6,34 @@ ere_quote() {
   sed 's/[][\/\.|$(){}?+*^]/\\&/g' <<< "$*"
 }
 
+has_wildcard_san() {
+  cert="$1"    # Pfad zu .crt oder fullchain
+  domain="$2"  # z.B. domain.tld
+  openssl x509 -in "$cert" -noout -text 2>/dev/null | grep -E -q 'DNS:[[:space:]]*\*\.'"$domain"'(,|$)' >/dev/null
+}
+
 DOMAIN=$(grep "^DOMAIN" .env | awk -F '=' '{print $2}')
 SUBDOMAIN=$(grep "^SUBDOMAIN" .env | awk -F '=' '{print $2}')
 PG_USERNAME=$(grep "^POSTGRES_USER" .env | awk -F '=' '{print $2}')
 PG_PASSWORD=$(grep "^POSTGRES_PASSWORD" .env | awk -F '=' '{print $2}')
 
+if [ -z "$DOMAIN" ]; then
+  echo "ERROR: ENV Var DOMAIN must be set!"
+  exit 1
+fi
+
 if [ -z "$SUBDOMAIN" ]; then
   SUBDOMAIN="app"
 fi
 
-sed -e "s/app.domain.tld/${SUBDOMAIN}.${DOMAIN}/g" ./acme.sh/www/.well-known/mta-sts.txt.tpl >./acme.sh/www/.well-known/mta-sts.txt
-
-if [ ! -f ./nginx/conf.d/default.conf ]; then
-  sed -e "s/app.domain.tld/${SUBDOMAIN}.${DOMAIN}/g" -e "s/domain.tld/${DOMAIN}/g" ./nginx/conf.d/default-init.conf.tpl > ./nginx/conf.d/default.conf
-  sed -e "s/app.domain.tld/${SUBDOMAIN}.${DOMAIN}/g" -e "s/domain.tld/${DOMAIN}/g" ./nginx/conf.d/default.conf.tpl > ./nginx/conf.d/nginx
-fi
-
 sed -e "s/app.domain.tld/${SUBDOMAIN}.${DOMAIN}/g" -e "s/domain.tld/${DOMAIN}/g" ./postfix/conf.d/main.cf.tpl > ./postfix/conf.d/main.cf
+
+CERT_SUB="/certs/${SUBDOMAIN}.${DOMAIN}"
+CERT_DOMAIN="/certs/${DOMAIN}"
+
+if [ -s $CERT_DOMAIN.fullchain.pem ] && ( [ ! -s $CERT_SUB.fullchain.pem ] || has_wildcard_san $CERT_DOMAIN.fullchain.pem $DOMAIN); then
+  sed -i -e "s,${CERT_SUB},${CERT_DOMAIN},g" ./postfix/conf.d/main.cf
+fi
 
 if [ ! -f ./postfix/conf.d/virtual ]; then
   sed -e "s/domain.tld/${DOMAIN}/g" ./postfix/conf.d/virtual.tpl > ./postfix/conf.d/virtual
@@ -39,4 +50,5 @@ sed -e "s/myuser/${PG_USERNAME}/g" ./postfix/conf.d/pgsql-transport-maps.cf.tpl 
 sed -i -e "s/mypassword/$(ere_quote ${PG_PASSWORD})/g" ./postfix/conf.d/pgsql-transport-maps.cf
 sed -i -e "s/domain.tld/${DOMAIN}/g" ./postfix/conf.d/pgsql-transport-maps.cf
 
-docker compose up --detach $@
+## use `--remove-orphans` to remove nginx container from previous versions, to free up ports 80/443 for traefik
+docker compose up --remove-orphans --detach $@

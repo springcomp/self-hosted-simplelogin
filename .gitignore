@@ -7,11 +7,6 @@ upload/
 dkim.pub.key
 dkim.key
 
-acme.sh/conf.d/
-acme.sh/www/.well-known/mta-sts.txt
-acme.sh/www/.well-known/acme-challenge/*
-nginx/conf.d/default.conf
-nginx/conf.d/nginx
 postfix/conf.d/aliases.lmdb
 postfix/conf.d/main.cf
 postfix/conf.d/pgsql-relay-domains.cf

@@ -16,7 +16,7 @@ CMD ["/bin/sh"]
 FROM alpine AS postfix
 
 # install dependencies
-RUN apk --no-cache add postfix postfix-pgsql
+RUN apk --no-cache add postfix postfix-pgsql openssl
 
 COPY ./docker-entrypoint.sh /docker-entrypoint.sh
 ENTRYPOINT ["/docker-entrypoint.sh"]
