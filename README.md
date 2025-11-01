@@ -569,8 +569,30 @@ to the latest stable version. Change the `SL_IMAGE` and `SL_VERSION`
 variables from the `.env` file:
 
 ```env
-SL_VERSION=v4.36.6
+SL_VERSION=v4.70.0
 SL_IMAGE=app-ci
 ```
 
+**Caution**: some [underpowered VPS](https://github.com/springcomp/self-hosted-simplelogin/issues/12#issuecomment-3160394621) might exhibit some WORKER_TIMEOUT errors
+when running the `sl-app` image. To mitigate this issue, you may want to
+increase the starting timeout value in [`simple-login-compose.yaml`](https://github.com/springcomp/self-hosted-simplelogin/blob/main/simple-login-compose.yaml#L49):
+
+```patch
+  app:
+    image: simplelogin/$SL_IMAGE:$SL_VERSION
+    container_name: sl-app
+    env_file: .env
+    volumes:
+      - ./pgp:/sl/pgp
+      - ./upload:/code/static/upload
+      - ./dkim.key:/dkim.key
+      - ./dkim.pub.key:/dkim.pub.key
++   command: ["gunicorn","wsgi:app","-b","0.0.0.0:7777","-w","2","--timeout","30"]
+    restart: unless-stopped
+```
+
 And restart the containers.
+
+This will pull up the latest versions of the docker images,
+potentially running the updated `sl-migration` steps, and
+startup the application.
