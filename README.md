@@ -1,5 +1,4 @@
-SimpleLogin
-===========
+# SimpleLogin
 
 This is a self-hosted docker-compose configuration for [SimpleLogin](https://simplelogin.io).
 
@@ -11,9 +10,7 @@ This is a self-hosted docker-compose configuration for [SimpleLogin](https://sim
 
 Except for the DNS setup that is usually done on your domain registrar interface, all the below steps are to be done on your server. The commands are to run with `bash` (or any bash-compatible shell like `zsh`) being the shell. If you use other shells like `fish`, please make sure to adapt the commands.
 
-### Some utility packages
-
-These packages are used to verify the setup. Install them by:
+- Some utility packages used to verify the setup. Install them by:
 
 ```bash
 sudo apt update \
@@ -34,8 +31,8 @@ dig @1.1.1.1 mydomain.com mx
 
 should return:
 
-```
-mydomain.com.	3600	IN	MX	10 app.mydomain.com.
+```dns
+mydomain.com. 3600 IN MX 10 app.mydomain.com.
 ```
 
 ### A record
@@ -53,7 +50,7 @@ should return your server IP.
 
 ### PTR record
 
-From Wikipedia https://en.wikipedia.org/wiki/Reverse_DNS_lookup
+From Wikipedia <https://en.wikipedia.org/wiki/Reverse_DNS_lookup>
 
 > A reverse DNS lookup or reverse DNS resolution (rDNS) is the querying technique of the Domain Name System (DNS) to determine the domain name associated with an IP address – the reverse of the usual "forward" DNS lookup of an IP address from a domain name.
 
@@ -70,7 +67,7 @@ should return your domain name.
 
 ### DKIM
 
-From Wikipedia https://en.wikipedia.org/wiki/DomainKeys_Identified_Mail
+From Wikipedia <https://en.wikipedia.org/wiki/DomainKeys_Identified_Mail>
 
 > DomainKeys Identified Mail (DKIM) is an email authentication method designed to detect forged sender addresses in emails (email spoofing), a technique often used in phishing and email spam.
 
@@ -89,17 +86,18 @@ For email gurus, we have chosen 1024 key length instead of 2048 for DNS simplici
 
 Set up DKIM by adding a **TXT record** for `dkim._domainkey.mydomain.com.` with the following value:
 
-```
+```plaintext
 v=DKIM1; k=rsa; p=PUBLIC_KEY
 ```
 
 with `PUBLIC_KEY` being your `dkim.pub.key` but
+
 - remove the `-----BEGIN PUBLIC KEY-----` and `-----END PUBLIC KEY-----`
 - join all the lines on a single line.
 
 For example, if your `dkim.pub.key` is
 
-```
+```plaintext
 -----BEGIN PUBLIC KEY-----
 ab
 cd
@@ -128,7 +126,7 @@ should return the above value.
 
 ### SPF
 
-From Wikipedia https://en.wikipedia.org/wiki/Sender_Policy_Framework
+From Wikipedia <https://en.wikipedia.org/wiki/Sender_Policy_Framework>
 
 > Sender Policy Framework (SPF) is an email authentication method designed to detect forging sender addresses during the delivery of the email
 
@@ -136,7 +134,7 @@ Similar to DKIM, setting up SPF is highly recommended.
 
 Create a **TXT record** for `mydomain.com.` with the value:
 
-```
+```plaintext
 v=spf1 mx -all
 ```
 
@@ -151,7 +149,7 @@ should return the above value.
 
 ### DMARC
 
-From Wikipedia https://en.wikipedia.org/wiki/DMARC
+From Wikipedia <https://en.wikipedia.org/wiki/DMARC>
 
 > It (DMARC) is designed to give email domain owners the ability to protect their domain from unauthorized use, commonly known as email spoofing
 
@@ -159,7 +157,7 @@ Setting up DMARC is also recommended.
 
 Create a **TXT record** for `_dmarc.mydomain.com.` with the following value
 
-```
+```plaintext
 v=DMARC1; p=quarantine; adkim=r; aspf=r
 ```
 
@@ -173,11 +171,11 @@ dig @1.1.1.1 _dmarc.mydomain.com txt
 
 should return the set value.
 
-For more information on DMARC, please consult https://tools.ietf.org/html/rfc7489
+For more information on DMARC, please consult <https://tools.ietf.org/html/rfc7489>
 
 ### HSTS
 
-From Wikipedia https://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security
+From Wikipedia <https://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security>
 
 > HTTP Strict Transport Security (HSTS) is a policy mechanism that helps to protect websites against man-in-the-middle attacks such as protocol downgrade attacks and cookie hijacking.
 
@@ -185,15 +183,15 @@ HTTP Strict Transport Security is an extra step you can take to protect your web
 
 This repository already enables HSTS, thanks to the following line to the `server` block of the Nginx configuration file:
 
-```
-add_header Strict-Transport-Security "max-age: 31536000; includeSubDomains" always;
+```nginx
+add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
 ```
 
 (The `max-age` is the time in seconds to not permit a HTTP connection, in this case it's one year.)
 
 ### CAA
 
-From Wikipedia https://en.wikipedia.org/wiki/DNS_Certification_Authority_Authorization
+From Wikipedia <https://en.wikipedia.org/wiki/DNS_Certification_Authority_Authorization>
 
 > DNS Certification Authority Authorization (CAA) is an Internet security policy mechanism that allows domain name holders to indicate to certificate authorities whether they are authorized to issue digital certificates for a particular domain name.
 
@@ -213,17 +211,16 @@ dig @1.1.1.1 mydomain.com caa
 
 should return:
 
-```
-mydomain.com.	3600	IN	CAA	0 issue "sectigo.com"
+```dns
+mydomain.com. 3600 IN CAA 0 issue "sectigo.com"
 ```
 
 **Warning**: setting up a CAA record will restrict which certificate authority can successfully issue SSL certificates for your domain.
 This will prevent certificate issuance from Let’s Encrypt staging servers. You may want to differ this DNS record until after SSL certificates are successfully issued for your domain.
 
-
 ### MTA-STS
 
-From Wikipedia https://en.wikipedia.org/wiki/Simple_Mail_Transfer_Protocol#SMTP_MTA_Strict_Transport_Security
+From Wikipedia <https://en.wikipedia.org/wiki/Simple_Mail_Transfer_Protocol#SMTP_MTA_Strict_Transport_Security>
 
 > SMTP MTA Strict Transport Security defines a protocol for mail servers to declare their ability to use secure channels in specific files on the server and specific DNS TXT records.
 
@@ -252,10 +249,9 @@ dig @1.1.1.1 mta-sts.mydomain.com a
 
 should return your server IP.
 
-
 Create a **TXT record** for `_mta-sts.mydomain.com.` with the following value:
 
-```txt
+```plaintext
 v=STSv1; id=UNIX_TIMESTAMP
 ```
 
@@ -275,8 +271,8 @@ dig @1.1.1.1 _mta-sts.mydomain.com txt
 
 should return a result similar to this one:
 
-```
-_mta-sts.mydomain.com.	3600	IN	TXT	"v=STSv1; id=1689416399"
+```dns
+_mta-sts.mydomain.com. 3600 IN TXT "v=STSv1; id=1689416399"
 ```
 
 ### TLSRPT
@@ -301,8 +297,8 @@ dig @1.1.1.1 _smtp._tls.mydomain.com txt
 
 should return a result similar to this one:
 
-```
-_smtp._tls.mydomain.com.	3600	IN	TXT	"v=TSLRPTv1; rua=mailto:tls-reports@mydomain.com"
+```dns
+_smtp._tls.mydomain.com. 3600 IN TXT "v=TSLRPTv1; rua=mailto:tls-reports@mydomain.com"
 ```
 
 ## Docker
@@ -314,6 +310,7 @@ You can also install Docker using the [docker-install](https://github.com/docker
 ```bash
 curl -fsSL https://get.docker.com | sh
 ```
+
 Enable IPv6 for [the default bridge network](https://docs.docker.com/config/daemon/ipv6/#use-ipv6-for-the-default-bridge-network)
 
 ```json
@@ -325,8 +322,6 @@ Enable IPv6 for [the default bridge network](https://docs.docker.com/config/daem
 }
 ```
 
-## Setup
-
 This procedure will guide you through running the entire stack using Docker containers.
 This includes:
 
@@ -335,29 +330,29 @@ This includes:
 - The [SimpleLogin app](https://github.com/simple-login/app) containers
 - postfix
 
-### Run SimpleLogin Docker containers
+Run SimpleLogin from Docker containers:
 
 1. Clone this repository in `/opt/simplelogin`
 1. Copy `.env.example` to `.env` and set appropriate values.
 
-- set the `DOMAIN` variable to your domain.
-- set the `SUBDOMAIN` variable to your domain. The default value is `app`.
-- set the `POSTGRES_USER` variable to match the postgres credentials.
-- set the `POSTGRES_PASSWORD` to match the postgres credentials.
-- set the `FLASK_SECRET` to an arbitrary secret key.
+    - set the `DOMAIN` variable to your domain.
+    - set the `SUBDOMAIN` variable to your domain. The default value is `app`.
+    - set the `POSTGRES_USER` variable to match the postgres credentials.
+    - set the `POSTGRES_PASSWORD` to match the postgres credentials.
+    - set the `FLASK_SECRET` to an arbitrary secret key.
+
+1. Set the following variables in `.env` to appropriate values:
+
+    - set the `LE_STAGING` to `true` or `false`.
+    - set the `ACME_CHALLENGE` variable to either `DNS-01` (default) or `HTTP-01`.
+    - set the `ACME_SERVER` variable to any of the [supported servers by acme.sh](https://github.com/acmesh-official/acme.sh/wiki/Server). Default value is `zerossl`.
 
 The SSL certs are issued by the ACME server using either:
 
 - HTTP-01 ACME challenge
 - DNS-01 ACME challenge using acme.sh DNS integration
 
-Set the following variables in `.env` to appropriate values:
-
-- set the `LE_STAGING` to `true` or `false`.
-- set the `ACME_CHALLENGE` variable to either `DNS-01` (default) or `HTTP-01`.
-- set the `ACME_SERVER` variable to any of the [supported servers by acme.sh](https://github.com/acmesh-official/acme.sh/wiki/Server). Default value is `zerossl`.
-
-**DNS-01 ACME challenge**
+### DNS-01 ACME challenge
 
 If you are using DNS-01 ACME challenge, set `ACME_SH_DNS_API` to one of the
 [supported acme.sh DNS API](https://github.com/acmesh-official/acme.sh#8-automatic-dns-api-integration) plugins.
@@ -367,7 +362,6 @@ This repository currently supports
 ) and
 [Cloudflare](https://github.com/acmesh-official/acme.sh/wiki/dnsapi#a-using-a-restrictive-api-token) DNS integrations.
 
-
 <details><summary>Microsoft Azure DNS configuration</summary>
 If using Microsoft Azure, update the following values in `.env`:
 
@@ -375,6 +369,7 @@ If using Microsoft Azure, update the following values in `.env`:
 - set `AZUREDNS_SUSCRIPTIONID` to the Azure subscription hosting the domain DNS zone.
 - set `AZUREDNS_CLIENTID` to the client id of a service principal with permissions to update the DNS zone.
 - set `AZUREDNS_CLIENTSECRET` to the client secret of a service principal with permissions to update the DNS zone.
+
 </details>
 
 <details><summary>Cloudflare DNS configuration</summary>
@@ -383,26 +378,27 @@ If using Cloudflare, update the following values in `.env`:
 - set `CF_Token` to the Cloudflare API token.
 - set `CF_Zone_ID` to the Cloudflare DNS Zone identifier.
 - set `CF_Account_ID` to your Cloudflare account identifier.
+
 </details>
 
-The SSL certificates will be available at the following locations:
+The SSL certificates will be available at the following locations inside the Docker containers:
 
 - `/etc/acme.sh/*.mydomain.com_ecc/fullchain.cer`
-- `/etc/acme.sh/*.mydomain.com_ecc/*.domain.tld.key`
+- `/etc/acme.sh/*.mydomain.com_ecc/*.mydomain.com.key`
 
-**HTTP-01 ACME challenge**
+### HTTP-01 ACME challenge
 
 If you are using HTTP-01 challenge, update the SSL certificate and key locations in following files:
 
 - `nginx/conf.d/default.conf.tpl`
 - `postfix/conf.d/main.cf.tpl`
 
-Specifically, using HTTP-01, the SSL certificates are available at the following locations:
+Specifically, using HTTP-01, the SSL certificates are available at the following locations inside the Docker containers:
 
 - `/etc/acme.sh/mydomain.com_ecc/fullchain.cer`
-- `/etc/acme.sh/mydomain.com_ecc/domain.tld.key`
+- `/etc/acme.sh/mydomain.com_ecc/mydomain.com.key`
 
-3. Run the application:
+#### Running the application
 
 The `up.sh` shell script updates important configuration files from templates provided in this repository,
 so that it uses the correct domain and postgresql credentials. Here are the template files:
@@ -432,7 +428,31 @@ rm -rf acme.sh/conf.d/
 
 You may also want to setup [Certificate Authority Authorization (CAA)](#caa) at this point.
 
-## Wildcard subdomains
+## Next steps
+
+If all the above steps are successful, open <http://app.mydomain.com/> and create your first account!
+
+By default, new accounts are not premium so don't have unlimited aliases. To make your account premium,
+please go to the database, table "users" and set "lifetime" column to "1" or "TRUE":
+
+```bash
+docker compose exec -it postgres psql -U myuser simplelogin
+> UPDATE users SET lifetime = TRUE;
+> \q
+```
+
+Once you've created all your desired login accounts, add these lines to `.env` to disable further registrations:
+
+```env
+DISABLE_REGISTRATION=1
+DISABLE_ONBOARDING=true
+```
+
+Then restart the web app to apply: `docker compose restart app`
+
+## Miscellaneous
+
+### Wildcard subdomains
 
 **Note** the following section documents wildcard certificates and subdomains. You may want to use builtin facility within SimpleLogin to achieve the same results.
 
@@ -448,11 +468,13 @@ dig @1.1.1.1 *.mydomain.com mx
 
 Should return:
 
-```
+```dns
 *.mydomain.com. 3600  IN  MX    10 app.mydomain.com
 ```
 
 Alternatively, you can update the `acme.sh/Dockerfiles/docker-entrypoint.sh` script and update the list of subdomains you want to issue SSL certificates for.
+
+### Postfix configuration
 
 The postfix configuration supports virtual aliases using the `postfix/conf.d/virtual` and `postfix/conf.d/virtual-regexp` files.
 Those files are automatically created on startup based upon the corresponding [`postfix/conf.d/virtual.tpl`](./postfix/conf.d/virtual.tpl)
@@ -460,50 +482,28 @@ and [`postfix/conf.d/virtual-regexp.tpl`](./postfix/conf.d/virtual-regexp.tpl) t
 
 The default configuration is as follows:
 
-### virtual.tpl
+#### virtual.tpl
 
 The `virtual` file supports postfix `virtual_alias_maps` settings.
 It includes a rule that maps `unknown@mydomain.com` to `contact@mydomain.com` to demonstrate receiving
 and email from a specific address that does not correspond to an existing alias, to another one that does.
 
-```
+```postfix-conf
 unknown@mydomain.com  contact@mydomain.com
 ```
 
-### virtual-regexp.tpl
+#### virtual-regexp.tpl
 
 The `virtual-regexp` file supports postfix `virtual_alias_maps` settings.
 It includes a rule that rewrite emails addressed to an arbitrary subdomain, which does not correspond
 to an existing alias, to a new alias that belongs to a directory whose name is taken from the subdomain.
 That alias may be created on the fly if it does not exist.
 
-```
+```postfix-conf
 /^([^@]+)@([^.]+)\.mydomain.com/   $2/$1@mydomain.com
 ```
 
 For instance, emails sent to `someone@directory.mydomain.com` will be routed to `directory/someone@mydomain.com` by postfix.
-
-## Enjoy!
-
-If all the above steps are successful, open http://app.mydomain.com/ and create your first account!
-
-By default, new accounts are not premium so don't have unlimited aliases. To make your account premium,
-please go to the database, table "users" and set "lifetime" column to "1" or "TRUE":
-
-```
-docker compose exec -it postgres psql -U myuser simplelogin
-> UPDATE users SET lifetime = TRUE;
-> \q
-```
-
-Once you've created all your desired login accounts, add these lines to `.env` to disable further registrations:
-
-```
-DISABLE_REGISTRATION=1
-DISABLE_ONBOARDING=true
-```
-
-Then restart the web app to apply: `docker compose restart app`
 
 ## How-to Upgrade from 3.4.0
 
@@ -534,7 +534,7 @@ The following changes must be done in `pgsql-transport-maps.cf`:
 
 ```patch
   dbname = simplelogin
-  
+
   query = SELECT 'smtp:127.0.0.1:20381' FROM custom_domain WHERE domain = '%s' AND verified=true
 +     UNION SELECT 'smtp:127.0.0.1:20381' FROM public_domain WHERE domain = '%s'
       UNION SELECT 'smtp:127.0.0.1:20381' WHERE '%s' = 'mydomain.com' LIMIT 1;
@@ -544,7 +544,7 @@ The following changes must be done in `pgsql-relay-maps.cf`:
 
 ```patch
   dbname = simplelogin
-  
+
   query = SELECT domain FROM custom_domain WHERE domain = '%s' AND verified=true
 +     UNION SELECT domain FROM public_domain WHERE domain = '%s'
       UNION SELECT '%s' WHERE '%s' = 'mydomain.com' LIMIT 1;
@@ -552,12 +552,11 @@ The following changes must be done in `pgsql-relay-maps.cf`:
 
 Finally, the following command must be run in the database:
 
-```
+```bash
 docker exec -it sl-db psql -U myuser simplelogin
 > UPDATE email_log SET alias_id=(SELECT alias_id FROM contact WHERE contact.id = email_log.contact_id);
 > \q
 ```
-
 
 - Restart containers
 
