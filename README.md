@@ -323,20 +323,10 @@ Run SimpleLogin from Docker containers:
 
 #### Running the application
 
-The `up.sh` shell script updates important configuration files from templates provided in this repository,
-so that it uses the correct domain and postgresql credentials. Here are the template files:
-
-- `postfix/conf.d/aliases`
-- `postfix/conf.d/main.cf.tpl`
-- `postfix/conf.d/pgsql-relay-domains.cf.tpl`
-- `postfix/conf.d/pgsql-transport-maps.cf.tpl`
-- `postfix/conf.d/virtual.tpl`
-- `postfix/conf.d/virtual-regexp.tpl`
-
 Run the application using the following commands:
 
 ```sh
-./up.sh --build && docker logs -f
+docker compose up --detach --remove-orphans --build && docker logs -f
 ```
 
 You may want to setup [Certificate Authority Authorization (CAA)](#caa) at this point.
@@ -396,8 +386,8 @@ You can find all supported DNS providers and corresponding instructions here: ht
 ### Postfix configuration
 
 The postfix configuration supports virtual aliases using the `postfix/conf.d/virtual` and `postfix/conf.d/virtual-regexp` files.
-Those files are automatically created on startup based upon the corresponding [`postfix/conf.d/virtual.tpl`](./postfix/conf.d/virtual.tpl)
-and [`postfix/conf.d/virtual-regexp.tpl`](./postfix/conf.d/virtual-regexp.tpl) template files.
+Those files are automatically created on startup based upon the corresponding [`postfix/templates/virtual.tpl`](./postfix/templates/virtual.tpl)
+and [`postfix/templates/virtual-regexp.tpl`](./postfix/templates/virtual-regexp.tpl) template files.
 
 The default configuration is as follows:
 
@@ -480,7 +470,7 @@ docker exec -it sl-db psql -U myuser simplelogin
 - Restart containers
 
 ```sh
-./down.sh && ./up.sh
+docker compose stop && docker compose up --detach
 ```
 
 After successfully upgrading to `v4.6.x-beta` you might want to upgrade
