@@ -19,10 +19,12 @@ services:
       - --global.sendanonymoususage=false
       - --providers.docker.exposedByDefault=false
       - --providers.docker.network=traefik
+      - --providers.file.directory=/etc/traefik/middlewares
       - --entrypoints.web.address=:80
       - --entrypoints.web.http.redirections.entrypoint.to=websecure
       - --entrypoints.web.http.redirections.entrypoint.scheme=https
       - --entrypoints.websecure.address=:443
+      - --entrypoints.websecure.http.middlewares=hsts@file
       - --entrypoints.websecure.http.tls.certresolver=${LE_CHALLENGE:-tls}
       - --certificatesresolvers.tls.acme.storage=/etc/traefik/acme/acme-tls.json
       - --certificatesresolvers.tls.acme.email=${LE_EMAIL:-${SUPPORT_EMAIL:-support@${DOMAIN}}}
@@ -47,6 +49,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - traefik-acme:/etc/traefik/acme
+      - ./traefik/middlewares/:/etc/traefik/middlewares/:ro
     extra_hosts:
       - host.docker.internal:host-gateway
     healthcheck:
