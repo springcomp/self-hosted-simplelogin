@@ -68,5 +68,5 @@ smtpd_recipient_restrictions =
 # Log output
 maillog_file=/dev/stdout
 
-virtual_alias_domains =
+virtual_alias_domains = 
 virtual_alias_maps = lmdb:/etc/postfix/conf.d/virtual, regexp:/etc/postfix/conf.d/virtual-regexp
