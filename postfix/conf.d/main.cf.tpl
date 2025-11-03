@@ -10,9 +10,9 @@ append_dot_mydomain = no
 
 readme_directory = no
 
-# See http://www.postfix.org/COMPATIBILITY_README.html -- default to 2 on
-# fresh installs.
-compatibility_level = 2
+# See http://www.postfix.org/COMPATIBILITY_README.html -- default to 3 for
+# modern security and performance defaults.
+compatibility_level = 3
 
 # TLS parameters
 smtpd_tls_cert_file=/certs/app.domain.tld.fullchain.pem
@@ -21,6 +21,32 @@ smtpd_tls_session_cache_database = lmdb:${data_directory}/smtpd_scache
 smtp_tls_session_cache_database = lmdb:${data_directory}/smtp_scache
 smtp_tls_security_level = may
 smtpd_tls_security_level = may
+
+# Harden TLS: disallow legacy protocol versions and weak ciphers.
+# - disable SSLv2/SSLv3 and TLSv1.0/TLSv1.1
+# - prefer "high" cipher suites and explicitly exclude known-weak ciphers
+# These settings apply to both the server (smtpd_*) and client (smtp_*) sides.
+smtpd_tls_protocols = !SSLv2, !SSLv3, !TLSv1, !TLSv1.1
+smtpd_tls_mandatory_protocols = !SSLv2, !SSLv3, !TLSv1, !TLSv1.1
+smtp_tls_protocols = !SSLv2, !SSLv3, !TLSv1, !TLSv1.1
+smtp_tls_mandatory_protocols = !SSLv2, !SSLv3, !TLSv1, !TLSv1.1
+
+smtpd_tls_ciphers = high
+smtpd_tls_mandatory_ciphers = high
+smtp_tls_ciphers = high
+smtp_tls_mandatory_ciphers = high
+
+# Explicitly exclude weak ciphers and primitives
+smtpd_tls_mandatory_exclude_ciphers = aNULL, eNULL, EXPORT, DES, RC4, MD5, PSK, SRP, kRSA
+smtp_tls_mandatory_exclude_ciphers = aNULL, eNULL, EXPORT, DES, RC4, MD5, PSK, SRP, kRSA
+
+# Also exclude these ciphers for opportunistic/non-mandatory TLS negotiations
+smtpd_tls_exclude_ciphers = aNULL, eNULL, EXPORT, DES, RC4, MD5, PSK, SRP, kRSA
+smtp_tls_exclude_ciphers = aNULL, eNULL, EXPORT, DES, RC4, MD5, PSK, SRP, kRSA
+
+# Log TLS negotiation failures and usage
+smtpd_tls_loglevel = 1
+
 
 # See /usr/share/doc/postfix/TLS_README.gz in the postfix-doc package for
 # information on enabling SSL in the smtp client.
