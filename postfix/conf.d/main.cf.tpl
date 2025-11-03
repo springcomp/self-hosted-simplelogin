@@ -10,9 +10,9 @@ append_dot_mydomain = no
 
 readme_directory = no
 
-# See http://www.postfix.org/COMPATIBILITY_README.html -- default to 2 on
-# fresh installs.
-compatibility_level = 2
+# See http://www.postfix.org/COMPATIBILITY_README.html -- default to 3 for
+# modern security and performance defaults.
+compatibility_level = 3
 
 # TLS parameters
 smtpd_tls_cert_file=/certs/app.domain.tld.fullchain.pem
