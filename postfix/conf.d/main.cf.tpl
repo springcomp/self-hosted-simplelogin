@@ -62,6 +62,8 @@ myorigin = domain.tld
 relay_domains = pgsql:/etc/postfix/conf.d/pgsql-relay-domains.cf
 transport_maps = pgsql:/etc/postfix/conf.d/pgsql-transport-maps.cf
 
+disable_vrfy_command = yes
+
 # HELO restrictions
 smtpd_delay_reject = yes
 smtpd_helo_required = yes
