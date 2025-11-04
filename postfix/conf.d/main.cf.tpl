@@ -22,6 +22,14 @@ smtp_tls_session_cache_database = lmdb:${data_directory}/smtp_scache
 smtp_tls_security_level = may
 smtpd_tls_security_level = may
 
+# Diffie-Hellman parameters for perfect forward secrecy
+# Use 4096-bit DH parameters for maximum security
+smtpd_tls_dh1024_param_file = /etc/postfix/ffdhe4096.pem
+smtpd_tls_dh512_param_file = /etc/postfix/dh512.pem
+
+# Enable EECDH for better security (elliptic curve DH)
+smtpd_tls_eecdh_grade = ultra
+
 # Harden TLS: disallow legacy protocol versions and weak ciphers.
 # - disable SSLv2/SSLv3 and TLSv1.0/TLSv1.1
 # - prefer "high" cipher suites and explicitly exclude known-weak ciphers
@@ -44,9 +52,13 @@ smtp_tls_mandatory_exclude_ciphers = aNULL, eNULL, EXPORT, DES, RC4, MD5, PSK, S
 smtpd_tls_exclude_ciphers = aNULL, eNULL, EXPORT, DES, RC4, MD5, PSK, SRP, kRSA
 smtp_tls_exclude_ciphers = aNULL, eNULL, EXPORT, DES, RC4, MD5, PSK, SRP, kRSA
 
+# Additional TLS security settings
+# Prefer server cipher order and enable secure renegotiation
+tls_preempt_cipherlist = yes
+tls_ssl_options = NO_COMPRESSION, NO_RENEGOTIATION
+
 # Log TLS negotiation failures and usage
 smtpd_tls_loglevel = 1
-
 
 # See /usr/share/doc/postfix/TLS_README.gz in the postfix-doc package for
 # information on enabling SSL in the smtp client.
