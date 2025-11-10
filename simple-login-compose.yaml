@@ -65,6 +65,7 @@ services:
       - traefik.enable=true
       - traefik.http.services.sl-app.loadbalancer.server.port=7777
       - traefik.http.routers.sl-app.service=sl-app
+      - traefik.http.routers.sl-app.middlewares=sts
       - traefik.http.routers.sl-app.rule=Host("${SUBDOMAIN:-app}.${DOMAIN:?DOMAIN_not_set}")
       - traefik.http.routers.sl-app.tls.certresolver=${LE_CHALLENGE:-tls}
       ## redirect http(s)://$DOMAIN -> https://$SUBDOMAIN.$DOMAIN
@@ -72,10 +73,17 @@ services:
       - traefik.http.routers.${LE_CHALLENGE:-tls}.tls.certresolver=${LE_CHALLENGE:-tls}
       - traefik.http.routers.dns.tls.domains[0].main=${DOMAIN}
       - traefik.http.routers.dns.tls.domains[0].sans=*.${DOMAIN}
-      - traefik.http.routers.${LE_CHALLENGE:-tls}.middlewares=redir,sts
+      - traefik.http.routers.${LE_CHALLENGE:-tls}.middlewares=sts,redir
       - traefik.http.middlewares.redir.redirectregex.regex=^https?://${DOMAIN}/?.*
       - traefik.http.middlewares.redir.redirectregex.replacement=https://${SUBDOMAIN:-app}.${DOMAIN}
-      ## static response for `mta-sts` subdomain
+      ## add STS Header for $DOMAIN and all subdomains
+      - traefik.http.middlewares.sts.headers.stsSeconds=31536000
+      - traefik.http.middlewares.sts.headers.sslRedirect=true
+      - traefik.http.middlewares.sts.headers.forceSTSHeader=true
+      - traefik.http.middlewares.sts.headers.stsIncludeSubdomains=true
+      ## only set stsPreload=true, after registering your domain on hstspreload.org
+      - traefik.http.middlewares.sts.headers.stsPreload=false
+      ## static response for `mta-sts` subdomain 
       - traefik.http.routers.mta-sts.rule=Host("mta-sts.${DOMAIN}") && PathPrefix("/.well-known/mta-sts.txt")
       - traefik.http.routers.mta-sts.service=noop@internal
       - traefik.http.routers.mta-sts.middlewares=mta-sts
