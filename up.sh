@@ -28,29 +28,52 @@ fi
 
 sed -e "s/app.domain.tld/${SUBDOMAIN}.${DOMAIN}/g" -e "s/domain.tld/${DOMAIN}/g" ./postfix/conf.d/main.cf.tpl > ./postfix/conf.d/main.cf
 
-if dig +short DS "$DOMAIN" | grep -q .; then
-  echo "DNSSEC DS record found for $DOMAIN"
-  # Enable DANE + DNSSEC in Postfix
-  sed -i \
-      -e 's/^smtp_dns_support_level.*/smtp_dns_support_level = dnssec/' \
-      -e 's/^smtp_tls_security_level.*/smtp_tls_security_level = dane/' \
-      ./postfix/conf.d/main.cf
-
-  # If entries do not exist, append them
-  grep -q "^smtp_dns_support_level" ./postfix/conf.d/main.cf || \
-      echo "smtp_dns_support_level = dnssec" >> ./postfix/conf.d/main.cf
-
-  grep -q "^smtp_tls_security_level" ./postfix/conf.d/main.cf || \
-      echo "smtp_tls_security_level = dane" >> ./postfix/conf.d/main.cf
-
-  echo "Postfix updated: DANE enabled."
-fi
-
 CERT_SUB="/certs/${SUBDOMAIN}.${DOMAIN}"
 CERT_DOMAIN="/certs/${DOMAIN}"
 
 if [ -s $CERT_DOMAIN.fullchain.pem ] && ( [ ! -s $CERT_SUB.fullchain.pem ] || has_wildcard_san $CERT_DOMAIN.fullchain.pem $DOMAIN); then
   sed -i -e "s,${CERT_SUB},${CERT_DOMAIN},g" ./postfix/conf.d/main.cf
+  CERT_SUB=$CERT_DOMAIN
+fi
+
+if dig +short DS "${SUBDOMAIN}.${DOMAIN}" | grep -q .; then
+  echo "DNSSEC DS record found for ${SUBDOMAIN}.${DOMAIN}"
+  # Enable DNSSEC in Postfix
+  sed -i \
+      -e 's/^smtp_dns_support_level.*/smtp_dns_support_level = dnssec/' \
+      ./postfix/conf.d/main.cf
+
+  # If entry does not exist, append it
+  grep -q "^smtp_dns_support_level" ./postfix/conf.d/main.cf || \
+      echo "smtp_dns_support_level = dnssec" >> ./postfix/conf.d/main.cf
+
+  echo "Postfix updated: DNSSEC enabled."
+
+  HASH=$(openssl x509 -in "$CERT_SUB.fullchain.pem" -noout -pubkey \
+      | openssl pkey -pubin -outform DER \
+      | openssl dgst -sha256 \
+      | awk '{print $2}')
+  echo "--------------------------------------------"
+  echo "TLSA record for ${SUBDOMAIN}.${DOMAIN}:"
+  echo "_25._tcp.${SUBDOMAIN}.${DOMAIN}. IN TLSA 3 1 1 $HASH"
+  echo "--------------------------------------------"
+
+  DNS_TLSA=$(dig +short TLSA _25._tcp."${SUBDOMAIN}.${DOMAIN}")
+  echo "DNS returned: $DNS_TLSA"
+
+  # Compare expected vs actual
+  echo "$DNS_TLSA" | grep -q "$HASH"
+  if [ $? -eq 0 ]; then
+    # Enable DANE in Postfix
+    sed -i \
+        -e 's/^smtp_tls_security_level.*/smtp_tls_security_level = dane/' \
+        ./postfix/conf.d/main.cf
+
+    # If entry does not exist, append it
+    grep -q "^smtp_tls_security_level" ./postfix/conf.d/main.cf || \
+        echo "smtp_tls_security_level = dane" >> ./postfix/conf.d/main.cf
+    echo "Postfix updated: DANE enabled."
+  fi
 fi
 
 if [ ! -f ./postfix/conf.d/virtual ]; then
