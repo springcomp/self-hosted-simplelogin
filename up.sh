@@ -28,6 +28,24 @@ fi
 
 sed -e "s/app.domain.tld/${SUBDOMAIN}.${DOMAIN}/g" -e "s/domain.tld/${DOMAIN}/g" ./postfix/conf.d/main.cf.tpl > ./postfix/conf.d/main.cf
 
+if dig +short DS "$DOMAIN" | grep -q .; then
+  echo "DNSSEC DS record found for $DOMAIN"
+  # Enable DANE + DNSSEC in Postfix
+  sed -i \
+      -e 's/^smtp_dns_support_level.*/smtp_dns_support_level = dnssec/' \
+      -e 's/^smtp_tls_security_level.*/smtp_tls_security_level = dane/' \
+      ./postfix/conf.d/main.cf
+
+  # If entries do not exist, append them
+  grep -q "^smtp_dns_support_level" ./postfix/conf.d/main.cf || \
+      echo "smtp_dns_support_level = dnssec" >> ./postfix/conf.d/main.cf
+
+  grep -q "^smtp_tls_security_level" ./postfix/conf.d/main.cf || \
+      echo "smtp_tls_security_level = dane" >> ./postfix/conf.d/main.cf
+
+  echo "Postfix updated: DANE enabled."
+fi
+
 CERT_SUB="/certs/${SUBDOMAIN}.${DOMAIN}"
 CERT_DOMAIN="/certs/${DOMAIN}"
 
