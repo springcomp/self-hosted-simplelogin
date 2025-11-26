@@ -35,6 +35,19 @@ if [ -s $CERT_DOMAIN.fullchain.pem ] && ( [ ! -s $CERT_SUB.fullchain.pem ] || ha
   sed -i -e "s,${CERT_SUB},${CERT_DOMAIN},g" ./postfix/conf.d/main.cf
 fi
 
+if dig +short DS "${DOMAIN}" | grep -q .; then
+  # Enable DNSSEC in Postfix
+  sed -i \
+      -e 's/^smtp_dns_support_level.*/smtp_dns_support_level = dnssec/' \
+      ./postfix/conf.d/main.cf
+
+  # If entry does not exist, append it
+  grep -q "^smtp_dns_support_level" ./postfix/conf.d/main.cf || \
+      echo "smtp_dns_support_level = dnssec" >> ./postfix/conf.d/main.cf
+
+  echo "DNSSEC DS record found for ${DOMAIN}: Postfix updated, DNSSEC enabled."
+fi
+
 if [ ! -f ./postfix/conf.d/virtual ]; then
   sed -e "s/domain.tld/${DOMAIN}/g" ./postfix/conf.d/virtual.tpl > ./postfix/conf.d/virtual
 fi
