@@ -15,7 +15,7 @@ COPY --from=base / /
 FROM alpine AS postfix
 
 # install dependencies
-RUN apk --no-cache add postfix postfix-pgsql \
+RUN apk --no-cache add postfix postfix-pgsql openssl bind-tools \
   && mkdir -p /templates /etc/postfix/conf.d
 
 COPY docker-entrypoint.sh /docker-entrypoint.sh
