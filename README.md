@@ -19,6 +19,19 @@ sudo apt update \
 
 ## DNS Configuration
 
+> **Please note** that DNS changes could take up to 24 hours to propagate. In practice, it's a lot faster though (~1 minute or so in our test). In DNS setup, we usually use domain with a trailing dot (`.`) at the end to to force using absolute domain.
+
+### A record
+
+Create an **A record** that points `app.mydomain.com.` to your server IP.
+To verify, the following command:
+
+```bash
+dig @1.1.1.1 app.mydomain.com a
+```
+
+should return your server IP.
+
 ### MX record
 
 Create a **MX record** that points `mydomain.com.` to `app.mydomain.com.` with priority 10.
@@ -34,19 +47,6 @@ should return:
 ```dns
 mydomain.com. 3600 IN MX 10 app.mydomain.com.
 ```
-
-### A record
-
-Create an **A record** that points `app.mydomain.com.` to your server IP.
-To verify, the following command:
-
-```bash
-dig @1.1.1.1 app.mydomain.com a
-```
-
-should return your server IP.
-
-> **Please note** that DNS changes could take up to 24 hours to propagate. In practice, it's a lot faster though (~1 minute or so in our test). In DNS setup, we usually use domain with a trailing dot (`.`) at the end to to force using absolute domain.
 
 ### PTR record
 
@@ -195,7 +195,7 @@ Use [SSLMate’s CAA Record Generator](https://sslmate.com/caa/) to create a **C
 
 - `flags`: `0`
 - `tag`: `issue`
-- `value`: `"sectigo.com"`
+- `value`: `"letsencrypt.org"`
 
 To verify if the DNS works, the following command:
 
@@ -206,7 +206,7 @@ dig @1.1.1.1 mydomain.com caa
 should return:
 
 ```dns
-mydomain.com. 3600 IN CAA 0 issue "sectigo.com"
+mydomain.com. 3600 IN CAA 0 issue "letsencrypt.org"
 ```
 
 **Warning**: setting up a CAA record will restrict which certificate authority can successfully issue SSL certificates for your domain.
@@ -323,20 +323,10 @@ Run SimpleLogin from Docker containers:
 
 #### Running the application
 
-The `up.sh` shell script updates important configuration files from templates provided in this repository,
-so that it uses the correct domain and postgresql credentials. Here are the template files:
-
-- `postfix/conf.d/aliases`
-- `postfix/conf.d/main.cf.tpl`
-- `postfix/conf.d/pgsql-relay-domains.cf.tpl`
-- `postfix/conf.d/pgsql-transport-maps.cf.tpl`
-- `postfix/conf.d/virtual.tpl`
-- `postfix/conf.d/virtual-regexp.tpl`
-
 Run the application using the following commands:
 
 ```sh
-./up.sh --build && docker logs -f
+docker compose up --detach --remove-orphans --build && docker compose logs -f
 ```
 
 You may want to setup [Certificate Authority Authorization (CAA)](#caa) at this point.
@@ -396,8 +386,8 @@ You can find all supported DNS providers and corresponding instructions here: ht
 ### Postfix configuration
 
 The postfix configuration supports virtual aliases using the `postfix/conf.d/virtual` and `postfix/conf.d/virtual-regexp` files.
-Those files are automatically created on startup based upon the corresponding [`postfix/conf.d/virtual.tpl`](./postfix/conf.d/virtual.tpl)
-and [`postfix/conf.d/virtual-regexp.tpl`](./postfix/conf.d/virtual-regexp.tpl) template files.
+Those files are automatically created on startup based upon the corresponding [`postfix/templates/virtual.tpl`](./postfix/templates/virtual.tpl)
+and [`postfix/templates/virtual-regexp.tpl`](./postfix/templates/virtual-regexp.tpl) template files.
 
 The default configuration is as follows:
 
@@ -434,13 +424,9 @@ SL_VERSION=4.6.5-beta
 
 - Check and apply [migration commands](https://github.com/simple-login/app/blob/master/docs/upgrade.md)
 
-For instance, to upgrade from `3.4.0` to `4.6.x-beta`, the following change must be done in `simplelogin-compose.yaml`:
+For instance, to upgrade from `3.4.0` to `4.6.x-beta`, the following change must be done in `simple-login-compose.yaml`:
 
 ```patch
-    volumes:
-      - ./db:/var/lib/postgresql/data
-    restart: unless-stopped
-
   migration:
     image: simplelogin/app:$SL_VERSION
 -   command: [ "flask", "db", "upgrade" ]
@@ -449,30 +435,10 @@ For instance, to upgrade from `3.4.0` to `4.6.x-beta`, the following change must
     env_file: .env
 ```
 
-The following changes must be done in `pgsql-transport-maps.cf`:
-
-```patch
-  dbname = simplelogin
-
-  query = SELECT 'smtp:127.0.0.1:20381' FROM custom_domain WHERE domain = '%s' AND verified=true
-+     UNION SELECT 'smtp:127.0.0.1:20381' FROM public_domain WHERE domain = '%s'
-      UNION SELECT 'smtp:127.0.0.1:20381' WHERE '%s' = 'mydomain.com' LIMIT 1;
-```
-
-The following changes must be done in `pgsql-relay-maps.cf`:
-
-```patch
-  dbname = simplelogin
-
-  query = SELECT domain FROM custom_domain WHERE domain = '%s' AND verified=true
-+     UNION SELECT domain FROM public_domain WHERE domain = '%s'
-      UNION SELECT '%s' WHERE '%s' = 'mydomain.com' LIMIT 1;
-```
-
 Finally, the following command must be run in the database:
 
 ```bash
-docker exec -it sl-db psql -U myuser simplelogin
+docker compose exec -it postgres psql -U myuser simplelogin
 > UPDATE email_log SET alias_id=(SELECT alias_id FROM contact WHERE contact.id = email_log.contact_id);
 > \q
 ```
@@ -480,7 +446,7 @@ docker exec -it sl-db psql -U myuser simplelogin
 - Restart containers
 
 ```sh
-./down.sh && ./up.sh
+docker compose stop && docker compose up --detach
 ```
 
 After successfully upgrading to `v4.6.x-beta` you might want to upgrade

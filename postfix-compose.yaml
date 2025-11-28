@@ -7,7 +7,7 @@ services:
   postfix:
     image: private/postfix:latest
     build:
-      context: ./postfix/Dockerfiles/
+      context: ./postfix/
       dockerfile: Dockerfile
     container_name: postfix
     env_file: .env
@@ -17,7 +17,6 @@ services:
       - '25:25'
       - '587:587'
     volumes:
-      - ./postfix/conf.d/:/etc/postfix/conf.d:rw
       - certs:/certs:ro
     restart: unless-stopped
     depends_on:
@@ -30,7 +29,6 @@ services:
     image: ravensorb/traefik-certificate-exporter:latest
     container_name: cert-exporter
     environment:
-      # - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_DRYRUN=false
       - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_FLAT=true
       - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_RESTARTCONTAINER=true
       - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_RUNATSTART=true
@@ -39,12 +37,14 @@ services:
       - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_DOMAINS_EXCLUDE=exclude     # see: https://github.com/ravensorb/traefik-certificate-exporter/issues/5
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - traefik-acme:/data:ro         # Location of traefik acme files
-      - certs:/certs:rw               # Location to export certificates to
+      - traefik-acme:/data:ro
+      - certs:/certs:rw
+    depends_on:
+      - app
 
 volumes:
   certs:
   ## Uncomment the next lines, if traefik is running outside this project
-  # traefik-acme:
-    # name: traefik-acme
+  # traefik-acme:  # <-- do not change this identifier
+    # name: traefik-acme    # change (only) this to the name of traefik acme storage volume
     # external: true
