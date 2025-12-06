@@ -381,7 +381,7 @@ Disadvantage of this configuration is, that letsencrypt does not allow requestin
 To request a wildcard certificate, edit `.env` file to set `LE_CHALLENGE=dns`, identify your DNS provider
 by setting `LE_DNS_PROVIDER`, and provide further details (i.e. credentials/API-Key, depending on your DNS provider) as ENV.
 
-You can find all supported DNS providers and corresponding instructions here: https://go-acme.github.io/lego/dns/
+You can find all supported DNS providers and corresponding instructions here: <https://go-acme.github.io/lego/dns/>
 
 ### Postfix configuration
 
@@ -481,3 +481,44 @@ And restart the containers.
 This will pull up the latest versions of the docker images,
 potentially running the updated `sl-migration` steps, and
 startup the application.
+
+## How-to Upgrade from previous NGinx-based setup
+
+This section outlines the migration steps from a previous installation of `self-hosted-simplelogin` using the NGinx-based setup, to the current Traefik-based setup.
+
+### Backup your server
+
+1. Backup the database using the following command:
+
+```powershell
+mkdir /tmp/sl-backup/
+
+docker compose \
+  -f /opt/simplelogin/docker-compose.yaml exec postgres \
+  pg_dump -U <postgres-user-name> simplelogin -F c -b >/tmp/sl-backup/simplelogin.sql
+```
+
+1. Backup your DKIM public and private keys.
+
+1. Backup your PGP keys, avatar picture and undelivered emails from the `upload/` and `pgp/` folders.
+
+1. Backup your existing `.env` file.
+
+### Upgrade
+
+**Prerequisites**: make sure you are running a recent version of SimpleLogin. This section assumes you are running `app-ci:v4.70.0`.
+
+1. Stop the stack using `. ./down.sh`.
+2. Upgrade to the latest version of the files.
+3. Create and update the `.env` file from `.env.example`.
+
+The new `.env` file supports specifying parameters for certificate renewal using either the `DNS-01` or `TLS–ALPN-01` ACME challenge from Let’sEncrypt using [LEGO](https://go-acme.github.io/lego/dns/) , a Let’sEncrypt client library written in Go. Please, review the LEGO documentation for supported providers and their parameters.
+
+4. Start the stack using `. ./up.sh`.
+
+You can now cleanup the folders that are no longer useful:
+
+```sh
+rm -rf acme.sh/
+rm -rf nginx/
+```
