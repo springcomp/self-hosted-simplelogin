@@ -504,13 +504,27 @@ docker compose \
 
 1. Backup your existing `.env` file.
 
-### Upgrade
+### Postfix
+
+The `postfix` container is running a private image that has changed from the previous NGinx-based setup to the current Traefik-based setup.
+
+That image needs to be regenerated. You can remove the previous version using the command:
+
+```sh
+docker rmi private/postfix:latest
+```
+
+### In-place upgrade
+
+In-place upgrade refers to the fact that you will upgrade the stack from the previous setup to the current setup in the same directoy.
+
+This is the easiest upgrade path as you only need to change the docker-compose and setup files. If you cloned this repository, you most likely need to use `git pull` to upgrade to the latest version.
 
 **Prerequisites**: make sure you are running a recent version of SimpleLogin. This section assumes you are running `app-ci:v4.70.0`.
 
 1. Stop the stack using `. ./down.sh`.
-2. Upgrade to the latest version of the files.
-3. Create and update the `.env` file from `.env.example`.
+1. Upgrade to the latest version of the files.
+1. Create and update the `.env` file from `.env.example`.
 
 The new `.env` file supports specifying parameters for certificate renewal using either the `DNS-01` or `TLS–ALPN-01` ACME challenge from Let’sEncrypt using [LEGO](https://go-acme.github.io/lego/dns/) , a Let’sEncrypt client library written in Go. Please, review the LEGO documentation for supported providers and their parameters.
 
@@ -521,4 +535,31 @@ You can now cleanup the folders that are no longer useful:
 ```sh
 rm -rf acme.sh/
 rm -rf nginx/
+```
+
+### Backup / restore upgrade
+
+If you want to keep the existing setup in a known working directory, you can use the backup - restore path to test the new setup from a separate folder.
+
+1. Clone this repository to get the latest version of the files.
+1. Create and update the `.env` file from `.env.example`.
+
+The new `.env` file supports specifying parameters for certificate renewal using either the `DNS-01` or `TLS–ALPN-01` ACME challenge from Let’sEncrypt using [LEGO](https://go-acme.github.io/lego/dns/) , a Let’sEncrypt client library written in Go. Please, review the LEGO documentation for supported providers and their parameters.
+
+3. Restore the `pgp/` and `upload/` folders.
+3. Restore the `dkim.pub.key` and `dkim.key` files.
+3. Restore the postfix `virtual` and `virtual-regexp` files.
+4. Start the stack using `. ./up.sh`.
+
+This will create the `private/postfix:latest` image and request new certificates from Let’s Encrypt.
+
+Once the application is running successfully, you need to restore the database. The easiest way it to copy the backup file in the `db/` folder:
+
+```sh
+sudo cp /tmp/sl-backup/simplelogin.sql db/
+docker compose exec -it pg_restore -U <postgres-user-name> \
+  --dbname=simplelogin \
+  --clean \
+  --verbose \
+  /var/lib/postgresql/data/simplelogin.sql
 ```
