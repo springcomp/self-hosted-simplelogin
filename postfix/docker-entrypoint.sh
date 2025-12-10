@@ -7,8 +7,8 @@ PG_USERNAME="${POSTGRES_USER:?Need POSTGRES_USER}"
 PG_PASSWORD="${POSTGRES_PASSWORD:?Need POSTGRES_PASSWORD}"
 
 # define paths (templates, config)
-TEMPLATE_DIR="${TEMPLATE_DIR:-/templates}"
-MAIL_CONFIG="${MAIL_CONFIG:-/etc/postfix/conf.d}"
+TEMPLATE_DIR="/templates"
+MAIL_CONFIG="/etc/postfix/conf.d"
 
 CERT_SUB="/certs/${SUBDOMAIN}.${DOMAIN}"
 CERT_DOMAIN="/certs/${DOMAIN}"

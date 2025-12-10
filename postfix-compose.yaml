@@ -11,11 +11,9 @@ services:
       dockerfile: Dockerfile
     container_name: postfix
     env_file: .env
-    environment:
-      MAIL_CONFIG: /etc/postfix/conf.d/
     ports:
-      - '25:25'
-      - '587:587'
+      - "25:25"
+      - "587:587"
     volumes:
       - certs:/certs:ro
     restart: unless-stopped
@@ -34,7 +32,7 @@ services:
       - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_RUNATSTART=true
       - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_RESOLVERINPATHNAME=false
       - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_DOMAINS_INCLUDE=${DOMAIN},${SUBDOMAIN:-app}.${DOMAIN},*.${DOMAIN}
-      - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_DOMAINS_EXCLUDE=exclude     # see: https://github.com/ravensorb/traefik-certificate-exporter/issues/5
+      - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_DOMAINS_EXCLUDE=exclude # see: https://github.com/ravensorb/traefik-certificate-exporter/issues/5
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - traefik-acme:/data:ro
@@ -46,5 +44,5 @@ volumes:
   certs:
   ## Uncomment the next lines, if traefik is running outside this project
   # traefik-acme:  # <-- do not change this identifier
-    # name: traefik-acme    # change (only) this to the name of traefik acme storage volume
-    # external: true
+  #   name: traefik-acme    # change (only) this to the name of traefik acme storage volume
+  #   external: true
