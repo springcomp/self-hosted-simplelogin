@@ -383,17 +383,6 @@ by setting `LE_DNS_PROVIDER`, and provide further details (i.e. credentials/API-
 
 You can find all supported DNS providers and corresponding instructions here: https://go-acme.github.io/lego/dns/
 
-SSL-Certificates are requested from [Let`s Encrypt](https://letsencrypt.org/).
-Traefik is (by default) configured to use TLS-ALPN Challenge, because this works out-of-the-box without further
-configuration, as long as DNS resolves to your server.
-
-Disadvantage of this configuration is, that letsencrypt does not allow requesting wildcard certificates via TLS Challenge.
-
-To request a wildcard certificate, edit `.env` file to set `LE_CHALLENGE=dns`, identify your DNS provider
-by setting `LE_DNS_PROVIDER`, and provide further details (i.e. credentials/API-Key, depending on your DNS provider) as ENV.
-
-You can find all supported DNS providers and corresponding instructions here: https://go-acme.github.io/lego/dns/
-
 ### Postfix configuration - Spamhaus
 
 Since Spamhaus blocks requests from public (open) DNS-Resolvers (see: https://check.spamhaus.org/returnc/pub) and your postfix container may use 
