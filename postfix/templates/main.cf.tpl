@@ -10,6 +10,9 @@ append_dot_mydomain = no
 
 readme_directory = no
 
+# Increase max. mail size limit from default 10M to 25M
+message_size_limit=26214400
+
 # ---- Modern compatibility level ----
 # Enables modern, secure Postfix defaults for TLS, ciphers, logging, and behavior.
 compatibility_level = 3.6
