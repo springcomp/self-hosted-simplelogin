@@ -12,8 +12,8 @@ services:
     container_name: postfix
     env_file: .env
     ports:
-      - "25:25"
-      - "587:587"
+      - '25:25'
+      - '587:587'
     volumes:
       - certs:/certs:ro
     restart: unless-stopped
