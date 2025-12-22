@@ -16,7 +16,6 @@ services:
       - "587:587"
     volumes:
       - certs:/certs:ro
-      - ./postfix/conf.d/:/postfix/conf.d/:ro
     restart: unless-stopped
     depends_on:
       - email
