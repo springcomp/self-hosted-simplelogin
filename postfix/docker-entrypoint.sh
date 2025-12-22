@@ -26,7 +26,13 @@ has_wildcard_san() {
   openssl x509 -in "$cert" -noout -text 2>/dev/null | grep -E -q 'DNS:[[:space:]]*\*\.'"$domain"'(,|$)' >/dev/null
 }
 
-# generate main.cf from template
+# generate main.cf from templates
+[ -f "$TEMPLATE_DIR/main.cf.tpl" ] && rm "$TEMPLATE_DIR/main.cf.tpl"
+find "$TEMPLATE_DIR" -type f -name '*-icf-*.tpl' | sed 's:.*/::' | sort -t- -k1,1n | while read -r f; do
+  cat "$TEMPLATE_DIR/$f"
+  printf '\n'
+done > "$TEMPLATE_DIR/main.cf.tpl"
+
 sed \
   -e "s/app.domain.tld/${SUBDOMAIN}.${DOMAIN}/g" \
   -e "s/domain.tld/${DOMAIN}/g" \
