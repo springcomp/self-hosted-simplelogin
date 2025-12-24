@@ -101,6 +101,7 @@ smtpd_recipient_restrictions =
    reject_unknown_recipient_domain,
    permit_mynetworks,
    reject_unauth_destination,
+   reject_rbl_client zen.spamhaus.org,
    reject_rbl_client your_DQS_key.zen.dq.spamhaus.net=127.0.0.[2..11],
    reject_rhsbl_sender your_DQS_key.dbl.dq.spamhaus.net=127.0.1.[2..99],
    reject_rhsbl_helo your_DQS_key.dbl.dq.spamhaus.net=127.0.1.[2..99],
