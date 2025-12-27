@@ -383,7 +383,22 @@ by setting `LE_DNS_PROVIDER`, and provide further details (i.e. credentials/API-
 
 You can find all supported DNS providers and corresponding instructions here: <https://go-acme.github.io/lego/dns/>
 
-### Postfix configuration
+### Postfix configuration - Spamhaus
+
+The Spamhaus Project maintains a reliable list of IP addresses known to be the source of SPAM.
+You can check whether a given IP address is in that list by submitting queries to the DNS infrastructure.
+
+Since Spamhaus blocks queries coming from public (open) DNS-Resolvers (see: https://check.spamhaus.org/returnc/pub) and your postfix container may use 
+a public resolver by default, it is recommended to sign up for the free 
+[Spamhaus Data Query Service](https://www.spamhaus.com/free-trial/sign-up-for-a-free-data-query-service-account/)
+and obtain a Spamhaus DQS key.
+
+Paste this key as `SPAMHAUS_DQS_KEY` in your `.env`
+
+If no DQS-key is provided, your postfix container will check if the Spamhaus public mirrors are accepting its queries and use them instead.
+If Spamhaus rejects queries from your postfix container to the public mirrors, it will be disabled entirely.
+
+### Postfix configuration - Virtual aliases
 
 The postfix configuration supports virtual aliases using the `postfix/conf.d/virtual` and `postfix/conf.d/virtual-regexp` files.
 Those files are automatically created on startup based upon the corresponding [`postfix/templates/virtual.tpl`](./postfix/templates/virtual.tpl)
