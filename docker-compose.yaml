@@ -17,3 +17,7 @@ networks:
       config:
         - subnet: 10.0.0.0/24
           gateway: 10.0.0.1
+## uncomment the following lines, if traefik is already running (outside of this project)
+#  traefik:           # <-- do not change this (identifier used inside this project)
+#    external: true
+#    name: traefik    # <-- change this to the name of your (external) traefik network
