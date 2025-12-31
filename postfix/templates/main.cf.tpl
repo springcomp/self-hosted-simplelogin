@@ -45,11 +45,6 @@ smtp_tls_mandatory_ciphers  = medium
 smtpd_tls_mandatory_exclude_ciphers = aNULL, eNULL, EXPORT, DES, RC4, MD5, PSK, SRP
 smtp_tls_mandatory_exclude_ciphers  = aNULL, eNULL, EXPORT, DES, RC4, MD5, PSK, SRP
 
-# ---- Perfect Forward Secrecy / Key exchange ----
-# No manual DH parameter files are needed; OpenSSL automatically uses secure
-# ECDHE or RFC 7919 FFDHE groups.
-smtpd_tls_eecdh_grade = strong
-
 # ---- Additional TLS hardening ----
 # Prefer server cipher order and disable TLS compression/renegotiation
 # to prevent CRIME and renegotiation attacks.
@@ -119,5 +114,5 @@ smtpd_recipient_restrictions =
 # Log output
 maillog_file=/dev/stdout
 
-virtual_alias_domains = 
+virtual_alias_domains =
 virtual_alias_maps = lmdb:/etc/postfix/conf.d/virtual, regexp:/etc/postfix/conf.d/virtual-regexp
