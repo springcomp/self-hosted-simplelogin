@@ -4,12 +4,29 @@ services:
   ## POSTFIX
   ## =================
 
+  dns:
+    image: private/unbound:latest
+    build:
+      context: ./unbound/
+      dockerfile: Dockerfile
+    container_name: dns
+    networks:
+      internal:
+        ipv4_address: 10.0.0.99
+    volumes:
+      - ./unbound/conf.d/:/opt/unbound/etc/unbound/:rw
+    restart: unless-stopped
+
   postfix:
     image: private/postfix:latest
     build:
       context: ./postfix/
       dockerfile: Dockerfile
     container_name: postfix
+    dns:
+      - '10.0.0.99'
+    networks:
+      - internal
     env_file: .env
     ports:
       - '25:25'
@@ -18,6 +35,7 @@ services:
       - certs:/certs:ro
     restart: unless-stopped
     depends_on:
+      - dns
       - email
       - traefik-certificate-exporter
     labels:

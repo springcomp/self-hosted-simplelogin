@@ -20,6 +20,8 @@ services:
       interval: 10s
       retries: 3
       start_period: 1s
+    networks:
+      - internal
     volumes:
       - ./db:/var/lib/postgresql/data
     restart: unless-stopped
@@ -28,6 +30,8 @@ services:
     <<: *sl-defaults
     command: [ "alembic", "upgrade", "head" ]
     container_name: sl-migration
+    networks:
+      - internal
     depends_on:
       postgres:
         condition: service_healthy
@@ -36,6 +40,8 @@ services:
     <<: *sl-defaults
     command: [ "python", "init_app.py" ]
     container_name: sl-init
+    networks:
+      - internal
     depends_on:
       migration:
         condition: service_completed_successfully
@@ -45,7 +51,7 @@ services:
     container_name: sl-app
     networks:
       - traefik
-      - default
+      - internal
     restart: unless-stopped
     depends_on:
       init:
@@ -86,6 +92,8 @@ services:
     <<: *sl-defaults
     command: ["python", "email_handler.py"]
     container_name: sl-email
+    networks:
+      - internal
     restart: unless-stopped
     depends_on:
       init:
@@ -95,6 +103,8 @@ services:
     <<: *sl-defaults
     command: ["python", "job_runner.py"]
     container_name: sl-job-runner
+    networks:
+      - internal
     restart: unless-stopped
     depends_on:
       init:
