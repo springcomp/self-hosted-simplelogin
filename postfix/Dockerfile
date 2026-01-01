@@ -22,5 +22,7 @@ COPY docker-entrypoint.sh /docker-entrypoint.sh
 COPY templates /templates/
 COPY conf.d /etc/postfix/conf.d/
 
+ENV MAIL_CONFIG=/etc/postfix/conf.d
+
 ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["/usr/sbin/postfix", "start-fg"]
