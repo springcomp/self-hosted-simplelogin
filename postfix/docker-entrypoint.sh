@@ -54,7 +54,13 @@ check_spamhaus_dns() {
   return 1
 }
 
-# generate main.cf from template
+# generate main.cf from templates
+[ -f "$TEMPLATE_DIR/main.cf.tpl" ] && rm "$TEMPLATE_DIR/main.cf.tpl"
+find "$TEMPLATE_DIR" -type f -name '*-icf-*.tpl' | sed 's:.*/::' | sort -t- -k1,1n | while read -r f; do
+  cat "$TEMPLATE_DIR/$f"
+  printf '\n'
+done > "$TEMPLATE_DIR/main.cf.tpl"
+
 sed \
   -e "s/app.domain.tld/${SUBDOMAIN}.${DOMAIN}/g" \
   -e "s/domain.tld/${DOMAIN}/g" \
@@ -101,12 +107,15 @@ if [ -n "$SPAMHAUS_DQS_KEY" ]; then
       "$TEMPLATE_DIR/dnsbl-reply-map.tpl" > "$MAIL_CONFIG/dnsbl-reply-map"
     postmap "$MAIL_CONFIG/dnsbl-reply-map"
   fi
+  echo "Configured DSNBL using Spamhaus Data Query Service (DQS)."
 elif check_spamhaus_dns; then
-  # use public mirror
+  # use public mirrors
   sed -i -e '/your_DQS_key/d' -e '/dnsbl-reply-map/d' "$MAIL_CONFIG/main.cf"
+  echo "Configured DNSBL using Spamhaus public mirrors."
 else
   # disable spamhaus completely
   sed -i -e '/spamhaus/d' -e '/dnsbl-reply-map/d' "$MAIL_CONFIG/main.cf"
+  echo "Spamhaus DSNBL checks disabled."
 fi
 
 # hand over to container CMD (postfix start-fg)
