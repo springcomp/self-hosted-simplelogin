@@ -64,19 +64,6 @@ if [ -s $CERT_DOMAIN.fullchain.pem ] && ( [ ! -s $CERT_SUB.fullchain.pem ] || ha
   sed -i -e "s,${CERT_SUB},${CERT_DOMAIN},g" "$MAIL_CONFIG/main.cf"
 fi
 
-if dig +short DS "${DOMAIN}" | grep -q .; then
-  # Enable DNSSEC in Postfix
-  sed -i \
-      -e 's/^smtp_dns_support_level.*/smtp_dns_support_level = dnssec/' \
-      "$MAIL_CONFIG/main.cf"
-
-  # If entry does not exist, append it
-  grep -q "^smtp_dns_support_level" "$MAIL_CONFIG/main.cf" || \
-      echo "smtp_dns_support_level = dnssec" >> "$MAIL_CONFIG/main.cf"
-
-  echo "DNSSEC DS record found for ${DOMAIN}: Postfix updated, DNSSEC enabled."
-fi
-
 # generate optional files only if they do not exist
 [ -f "$MAIL_CONFIG/virtual" ] || \
   sed -e "s/domain.tld/${DOMAIN}/g" \
