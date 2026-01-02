@@ -5,6 +5,8 @@ x-sl-defaults: &sl-defaults
     - ./pgp:/sl/pgp
     - ./upload:/code/static/upload
     - ./dkim.key:/dkim.key
+  networks:
+    - internal
 
 services:
 
@@ -20,6 +22,8 @@ services:
       interval: 10s
       retries: 3
       start_period: 1s
+    networks:
+      - internal
     volumes:
       - ./db:/var/lib/postgresql/data
     restart: unless-stopped
@@ -45,7 +49,7 @@ services:
     container_name: sl-app
     networks:
       - traefik
-      - default
+      - internal
     restart: unless-stopped
     depends_on:
       init:
