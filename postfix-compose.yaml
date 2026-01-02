@@ -12,7 +12,7 @@ services:
     container_name: dns
     networks:
       internal:
-        ipv4_address: 10.0.0.99
+        ipv4_address: 10.0.0.53
     volumes:
       - ./unbound/conf.d/:/opt/unbound/etc/unbound/:rw
     restart: unless-stopped
@@ -24,7 +24,7 @@ services:
       dockerfile: Dockerfile
     container_name: postfix
     dns:
-      - '10.0.0.99'
+      - '10.0.0.53'
     networks:
       - internal
     env_file: .env
