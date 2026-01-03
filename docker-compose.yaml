@@ -5,6 +5,7 @@
 # - container `traefik-certificate-exporter` can access traefiks acme-storage
 
 include:
+  - cloudflare-ddns-compose.yaml
   - traefik-compose.yaml
   - simple-login-compose.yaml
   - postfix-compose.yaml

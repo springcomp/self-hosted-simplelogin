@@ -1,0 +1,13 @@
+services:
+  cloudflare-ddns:
+    image: favonia/cloudflare-ddns:latest
+    restart: unless-stopped
+    user: "1000:1000"
+    read_only: true
+    cap_drop: [all]
+    security_opt: [no-new-privileges:true]
+    environment:
+      - CLOUDFLARE_API_TOKEN=$CF_API_KEY
+      - DOMAINS=app.mailveil.me, mta-sts.mailveil.me
+      - PROXIED=false
+      - IP6_PROVIDER=none

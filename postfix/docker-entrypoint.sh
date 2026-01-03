@@ -5,6 +5,10 @@
 SUBDOMAIN="${SUBDOMAIN:-app}"
 PG_USERNAME="${POSTGRES_USER:?Need POSTGRES_USER}"
 PG_PASSWORD="${POSTGRES_PASSWORD:?Need POSTGRES_PASSWORD}"
+PM_URL="${POSTMARK_URL:?Need POSTMARK_URL}"
+PM_PORT="${POSTMARK_PORT:?Need POSTMARK_PORT}"
+PM_USER="${POSTMARK_USER:?Need POSTMARK_USER}"
+PM_PASS="${POSTMARK_PASS:?Need POSTMARK_PASS}"
 
 # define paths (templates, config)
 TEMPLATE_DIR="/templates"
@@ -64,6 +68,10 @@ done > "$TEMPLATE_DIR/main.cf.tpl"
 sed \
   -e "s/app.domain.tld/${SUBDOMAIN}.${DOMAIN}/g" \
   -e "s/domain.tld/${DOMAIN}/g" \
+  -e "s/POST_URL/${PM_URL}/g" \
+  -e "s/POST_PORT/${PM_PORT}/g" \
+  -e "s/POST_USER/${PM_USER}/g" \
+  -e "s/POST_PASS/${PM_PASS}/g" \
   "$TEMPLATE_DIR/main.cf.tpl" > "$MAIL_CONFIG/main.cf"
 
 if [ -s $CERT_DOMAIN.fullchain.pem ] && ( [ ! -s $CERT_SUB.fullchain.pem ] || has_wildcard_san $CERT_DOMAIN.fullchain.pem $DOMAIN); then
