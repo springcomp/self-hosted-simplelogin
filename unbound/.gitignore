@@ -1,7 +1,0 @@
-conf.d/dev/
-
-conf.d/var/root.hints
-conf.d/var/root.key
-conf.d/var/unbound.log
-
-conf.d/unbound.pid
