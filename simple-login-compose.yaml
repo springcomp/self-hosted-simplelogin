@@ -90,6 +90,8 @@ services:
     depends_on:
       init:
         condition: service_completed_successfully
+      postfix:
+        condition: service_healthy
 
   job-runner:
     <<: *sl-defaults
@@ -99,3 +101,5 @@ services:
     depends_on:
       init:
         condition: service_completed_successfully
+      email:
+        condition: service_started
