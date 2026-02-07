@@ -99,3 +99,5 @@ services:
     depends_on:
       init:
         condition: service_completed_successfully
+      email:
+        condition: service_started

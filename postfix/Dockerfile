@@ -15,7 +15,7 @@ COPY --from=base / /
 FROM alpine AS postfix
 
 # install dependencies
-RUN apk --no-cache add postfix postfix-pgsql openssl bind-tools \
+RUN apk --no-cache add postfix postfix-pgsql openssl bind-tools netcat-openbsd \
   && mkdir -p /templates /etc/postfix/conf.d
 
 COPY docker-entrypoint.sh /docker-entrypoint.sh
@@ -24,5 +24,6 @@ COPY conf.d /etc/postfix/conf.d/
 
 ENV MAIL_CONFIG=/etc/postfix/conf.d
 
+EXPOSE 25
 ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["/usr/sbin/postfix", "start-fg"]

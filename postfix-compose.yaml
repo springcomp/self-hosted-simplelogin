@@ -13,13 +13,18 @@ services:
     env_file: .env
     ports:
       - '25:25'
-      - '587:587'
     volumes:
       - certs:/certs:ro
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "nc -w 3 127.0.0.1 25 </dev/null | grep -q '^220'"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     depends_on:
-      - email
-      - traefik-certificate-exporter
+      traefik-certificate-exporter:
+        condition: service_healthy
     labels:
       - com.github.ravensorb.traefik-certificate-exporter.domain-restart=${SUBDOMAIN:-app}.${DOMAIN},${DOMAIN}
 
@@ -37,6 +42,12 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - traefik-acme:/data:ro
       - certs:/certs:rw
+    healthcheck:
+      test: ["CMD-SHELL", "[ -f \"/certs/${SUBDOMAIN:-app}.${DOMAIN}.fullchain.pem\" ] || [ -f \"/certs/${DOMAIN}.fullchain.pem\" ]"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 5m
     depends_on:
       - app
 
