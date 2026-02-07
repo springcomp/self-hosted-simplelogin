@@ -55,7 +55,7 @@ services:
 
 volumes:
   certs:
-## Uncomment the next lines, if traefik is running outside this project
-#  traefik-acme:  # <-- do not change this identifier
-#    name: traefik-acme    # change (only) this to the name of traefik acme storage volume
-#    external: true
+  ## Uncomment the next lines, if traefik is running outside this project
+  # traefik-acme:  # <-- do not change this identifier
+  #   name: traefik-acme    # change (only) this to the name of traefik acme storage volume
+  #   external: true
