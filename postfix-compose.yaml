@@ -23,8 +23,6 @@ services:
       retries: 3
       start_period: 30s
     depends_on:
-      postgres:  
-        condition: service_healthy
       traefik-certificate-exporter:
         condition: service_healthy
     labels:
