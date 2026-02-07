@@ -4,12 +4,35 @@ services:
   ## POSTFIX
   ## =================
 
+  dns:
+    image: crazymax/unbound:latest
+    container_name: dns
+    user: "0:0"
+    cap_add:
+      - NET_BIND_SERVICE
+    networks:
+      internal:
+        ipv4_address: 10.0.0.53
+    volumes:
+      - ./unbound/conf.d/:/config/:ro
+    restart: unless-stopped
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - |
+        unbound-anchor -a /var/run/unbound/root.key || true
+        exec su -s /bin/sh unbound -c "sh /entrypoint.sh"
+
   postfix:
     image: private/postfix:latest
     build:
       context: ./postfix/
       dockerfile: Dockerfile
     container_name: postfix
+    dns:
+      - '10.0.0.53'
+    networks:
+      - internal
     env_file: .env
     ports:
       - '25:25'
@@ -23,6 +46,8 @@ services:
       retries: 3
       start_period: 30s
     depends_on:
+      dns:
+        condition: service_healthy
       traefik-certificate-exporter:
         condition: service_healthy
     labels:
