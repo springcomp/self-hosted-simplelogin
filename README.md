@@ -19,268 +19,31 @@ sudo apt update \
 
 ## DNS Configuration
 
+_Refer to the [reference documentation](https://github.com/springcomp/self-hosted-simplelogin/wiki/DNS-Configuration) for more details_
+
 > **Please note** that DNS changes could take up to 24 hours to propagate. In practice, it's a lot faster though (~1 minute or so in our test). In DNS setup, we usually use domain with a trailing dot (`.`) at the end to to force using absolute domain.
 
-### A record
+You will need to setup the following DNS records:
 
-Create an **A record** that points `app.mydomain.com.` to your server IP.
-To verify, the following command:
+- **A**: Maps your domain to your server's IPv4 address.
+- **AAAA**: Maps your domain to your server's IPv6 address.
+- **MX**: Directs incoming emails to your mail server (including `*` wildcards).
+- **PTR**: Maps your server's IP address back to your domain name.
 
-```bash
-dig @1.1.1.1 app.mydomain.com a
-```
+Set up mandatory security policies:
 
-should return your server IP.
+- **DKIM**: Digitally signs outgoing emails to verify authenticity.
+- **DMARC**: Defines how email receivers should handle messages failing authentication.
+- **SPF**: Authorizes specific mail servers to send emails from your domain.
 
-### MX record
+Additional steps:
 
-Create a **MX record** that points `mydomain.com.` to `app.mydomain.com.` with priority 10.
-
-To verify if the DNS works, the following command:
-
-```bash
-dig @1.1.1.1 mydomain.com mx
-```
-
-should return:
-
-```dns
-mydomain.com. 3600 IN MX 10 app.mydomain.com.
-```
-
-### PTR record
-
-From Wikipedia <https://en.wikipedia.org/wiki/Reverse_DNS_lookup>
-
-> A reverse DNS lookup or reverse DNS resolution (rDNS) is the querying technique of the Domain Name System (DNS) to determine the domain name associated with an IP address – the reverse of the usual "forward" DNS lookup of an IP address from a domain name.
-
-Create a **PTR record** that point your IP address to your domain name.
-**Important** Some providers require PTR configuration to be done from their dashboard and ignore DNS records. Please, make sure to properly configure reverse DNS lookup for your domain.
-
-To verify, the following command:
-
-```bash
-dig @1.1.1.1 -x $( ip addr show eth0 | grep 'inet ' | awk '{print $2}' | cut -d'/' -f1)
-```
-
-should return your domain name.
-
-### DKIM
-
-From Wikipedia <https://en.wikipedia.org/wiki/DomainKeys_Identified_Mail>
-
-> DomainKeys Identified Mail (DKIM) is an email authentication method designed to detect forged sender addresses in emails (email spoofing), a technique often used in phishing and email spam.
-
-Setting up DKIM is highly recommended to reduce the chance for your emails ending up in the recipient's Spam folder.
-
-First you need to generate a private and public key for DKIM:
-
-```bash
-openssl genrsa -traditional -out dkim.key 1024
-openssl rsa -in dkim.key -pubout -out dkim.pub.key
-```
-
-You will need the files `dkim.key` and `dkim.pub.key` for the next steps.
-
-For email gurus, we have chosen 1024 key length instead of 2048 for DNS simplicity as some registrars don't play well with long TXT record.
-
-Set up DKIM by adding a **TXT record** for `dkim._domainkey.mydomain.com.` with the following value:
-
-```plaintext
-v=DKIM1; k=rsa; p=PUBLIC_KEY
-```
-
-with `PUBLIC_KEY` being your `dkim.pub.key` but
-
-- remove the `-----BEGIN PUBLIC KEY-----` and `-----END PUBLIC KEY-----`
-- join all the lines on a single line.
-
-For example, if your `dkim.pub.key` is
-
-```plaintext
------BEGIN PUBLIC KEY-----
-ab
-cd
-ef
-gh
------END PUBLIC KEY-----
-```
-
-then the `PUBLIC_KEY` would be `abcdefgh`.
-
-You can get the `PUBLIC_KEY` by running this command:
-
-```bash
-sed "s/-----BEGIN PUBLIC KEY-----/v=DKIM1; k=rsa; p=/g" $(pwd)/dkim.pub.key | \
-  sed 's/-----END PUBLIC KEY-----//g' | \
-  tr -d '\n' | awk 1
-```
-
-To verify, the following command:
-
-```bash
-dig @1.1.1.1 dkim._domainkey.mydomain.com txt
-```
-
-should return the above value.
-
-### SPF
-
-From Wikipedia <https://en.wikipedia.org/wiki/Sender_Policy_Framework>
-
-> Sender Policy Framework (SPF) is an email authentication method designed to detect forging sender addresses during the delivery of the email
-
-Similar to DKIM, setting up SPF is highly recommended.
-
-Create a **TXT record** for `mydomain.com.` with the value:
-
-```plaintext
-v=spf1 mx -all
-```
-
-What it means is only your server can send email with `@mydomain.com` domain.
-To verify, the following command
-
-```bash
-dig @1.1.1.1 mydomain.com txt
-```
-
-should return the above value.
-
-### DMARC
-
-From Wikipedia <https://en.wikipedia.org/wiki/DMARC>
-
-> It (DMARC) is designed to give email domain owners the ability to protect their domain from unauthorized use, commonly known as email spoofing
-
-Setting up DMARC is also recommended.
-
-Create a **TXT record** for `_dmarc.mydomain.com.` with the following value
-
-```plaintext
-v=DMARC1; p=quarantine; adkim=r; aspf=r
-```
-
-This is a `relaxed` DMARC policy. You can also use a more strict policy with `v=DMARC1; p=reject; adkim=s; aspf=s` value.
-
-To verify, the following command
-
-```bash
-dig @1.1.1.1 _dmarc.mydomain.com txt
-```
-
-should return the set value.
-
-For more information on DMARC, please consult <https://tools.ietf.org/html/rfc7489>
-
-### HSTS
-
-From Wikipedia <https://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security>
-
-> HTTP Strict Transport Security (HSTS) is a policy mechanism that helps to protect websites against man-in-the-middle attacks such as protocol downgrade attacks and cookie hijacking.
-
-HTTP Strict Transport Security is an extra step you can take to protect your web app from certain man-in-the-middle attacks. It does this by specifying an amount of time (usually a really long one) for which you should only accept HTTPS connections, not HTTP ones.
-
-This repository already enables HSTS, thanks to the traefik configuration for the simplelogin container
-
-### CAA
-
-From Wikipedia <https://en.wikipedia.org/wiki/DNS_Certification_Authority_Authorization>
-
-> DNS Certification Authority Authorization (CAA) is an Internet security policy mechanism that allows domain name holders to indicate to certificate authorities whether they are authorized to issue digital certificates for a particular domain name.
-
-[Certificate Authority Authorization](https://letsencrypt.org/docs/caa/) is a step you can take to restrict the list of certificate authorities that are allowed to issue certificates for your domains.
-
-Use [SSLMate’s CAA Record Generator](https://sslmate.com/caa/) to create a **CAA record** with the following configuration:
-
-- `flags`: `0`
-- `tag`: `issue`
-- `value`: `"letsencrypt.org"`
-
-To verify if the DNS works, the following command:
-
-```bash
-dig @1.1.1.1 mydomain.com caa
-```
-
-should return:
-
-```dns
-mydomain.com. 3600 IN CAA 0 issue "letsencrypt.org"
-```
+- **CAA**: Specifies which certificate authorities are allowed to issue SSL certificates for your domain.
+- **MTA-STS**: Enforces secure, encrypted connections between mail servers.
+- **TLS-RPT**: Reports TLS connection failures to improve email delivery security.
 
 **Warning**: setting up a CAA record will restrict which certificate authority can successfully issue SSL certificates for your domain.
 This will prevent certificate issuance from Let’s Encrypt staging servers. You may want to differ this DNS record until after SSL certificates are successfully issued for your domain.
-
-### MTA-STS
-
-From Wikipedia <https://en.wikipedia.org/wiki/Simple_Mail_Transfer_Protocol#SMTP_MTA_Strict_Transport_Security>
-
-> SMTP MTA Strict Transport Security defines a protocol for mail servers to declare their ability to use secure channels in specific files on the server and specific DNS TXT records.
-
-[SMTP MTA Strict Transport Security](https://datatracker.ietf.org/doc/html/rfc8461) is an extra step you can take to broadcast the ability of your instance to receive and, optionally enforce, TSL-secure SMTP connections to protect email traffic.
-
-Create an **A record** that points `mta-sts.mydomain.com.` to your server IP.
-
-To verify, the following command:
-
-```bash
-dig @1.1.1.1 mta-sts.mydomain.com a
-```
-
-should return your server IP.
-
-Create a **TXT record** for `_mta-sts.mydomain.com.` with the following value:
-
-```plaintext
-v=STSv1; id=UNIX_TIMESTAMP
-```
-
-With `UNIX_TIMESTAMP` being the current date/time.
-
-Use the following command to generate the record:
-
-```bash
-echo "v=STSv1; id=$(date +%s)"
-```
-
-To verify if the DNS works, the following command:
-
-```bash
-dig @1.1.1.1 _mta-sts.mydomain.com txt
-```
-
-should return a result similar to this one:
-
-```dns
-_mta-sts.mydomain.com. 3600 IN TXT "v=STSv1; id=1689416399"
-```
-
-### TLSRPT
-
-[SMTP TLS Reporting](https://datatracker.ietf.org/doc/html/rfc8460) is used by SMTP systems to report failures in establishing TLS-secure sessions as broadcast by the MTA-STS configuration.
-
-Configuring MTA-STS in `mode: testing` as shown in the previous section gives you time to review failures from some SMTP senders.
-
-Create a **TXT record** for `_smtp._tls.mydomain.com.` with the following value:
-
-```txt
-v=TSLRPTv1; rua=mailto:YOUR_EMAIL
-```
-
-The TLSRPT configuration at the DNS level allows SMTP senders that fail to initiate TLS-secure sessions to send reports to a particular email address.  We suggest creating a `tls-reports` alias in SimpleLogin for this purpose.
-
-To verify if the DNS works, the following command
-
-```bash
-dig @1.1.1.1 _smtp._tls.mydomain.com txt
-```
-
-should return a result similar to this one:
-
-```dns
-_smtp._tls.mydomain.com. 3600 IN TXT "v=TSLRPTv1; rua=mailto:tls-reports@mydomain.com"
-```
 
 ## Docker
 
@@ -321,7 +84,15 @@ Run SimpleLogin from Docker containers:
     - set the `POSTGRES_PASSWORD` to match the postgres credentials (when starting from scratch, set to a random key).
     - set the `FLASK_SECRET` to an arbitrary secret key.
 
-#### Running the application
+### Postgres SQL
+
+This repository runs a postgres SQL in a Docker container.
+
+**Warning**: previous versions of this repository ran version `12.1`.
+Please, refer to the [reference documentation](https://github.com/springcomp/self-hosted-simplelogin/wiki/PostgreSQL) for more details and
+upgrade instructions.
+
+### Running the application
 
 Run the application using the following commands:
 
@@ -329,7 +100,7 @@ Run the application using the following commands:
 docker compose up --detach --remove-orphans --build && docker compose logs -f
 ```
 
-You may want to setup [Certificate Authority Authorization (CAA)](#caa) at this point.
+You may want to setup [Certificate Authority Authorization (CAA)](https://github.com/springcomp/self-hosted-simplelogin/wiki/dns-caa) at this point.
 
 ## Next steps
 
@@ -355,41 +126,13 @@ Then, to restart the web app, apply: `docker compose restart app`
 
 ## Miscellaneous
 
-### Wildcard subdomains
-
-**Note** the following section documents wildcard certificates and subdomains. You may want to use builtin facility within SimpleLogin to achieve the same results.
-
-If your DNS supports it, you can add a **MX record** to point `*.mydomain.com` to `app.mydomain.com` so that you can receive mails from any number of subdomains.
-To verify, the following command:
-
-```sh
-dig @1.1.1.1 *.mydomain.com mx
-```
-
-Should return:
-
-```dns
-*.mydomain.com. 3600  IN  MX    10 app.mydomain.com
-```
-
-SSL-Certificates are requested from [Let`s Encrypt](https://letsencrypt.org/).
-Traefik is (by default) configured to use TLS-ALPN Challenge, because this works out-of-the-box without further
-configuration, as long as DNS resolves to your server.
-
-Disadvantage of this configuration is, that letsencrypt does not allow requesting wildcard certificates via TLS Challenge.
-
-To request a wildcard certificate, edit `.env` file to set `LE_CHALLENGE=dns`, identify your DNS provider
-by setting `LE_DNS_PROVIDER`, and provide further details (i.e. credentials/API-Key, depending on your DNS provider) as ENV.
-
-You can find all supported DNS providers and corresponding instructions here: <https://go-acme.github.io/lego/dns/>
-
 ### Postfix configuration - Spamhaus
 
 The Spamhaus Project maintains a reliable list of IP addresses known to be the source of SPAM.
 You can check whether a given IP address is in that list by submitting queries to the DNS infrastructure.
 
-Since Spamhaus blocks queries coming from public (open) DNS-Resolvers (see: https://check.spamhaus.org/returnc/pub) and your postfix container may use 
-a public resolver by default, it is recommended to sign up for the free 
+Since Spamhaus blocks queries coming from public (open) DNS-Resolvers (see: <https://check.spamhaus.org/returnc/pub>) and your postfix container may use
+a public resolver by default, it is recommended to sign up for the free
 [Spamhaus Data Query Service](https://www.spamhaus.com/free-trial/sign-up-for-a-free-data-query-service-account/)
 and obtain a Spamhaus DQS key.
 
@@ -431,150 +174,8 @@ For instance, emails sent to `someone@directory.mydomain.com` will be routed to 
 
 ## How-to Upgrade from 3.4.0
 
-- Change the image version in `.env`
-
-```env
-SL_VERSION=4.6.5-beta
-```
-
-- Check and apply [migration commands](https://github.com/simple-login/app/blob/master/docs/upgrade.md)
-
-For instance, to upgrade from `3.4.0` to `4.6.x-beta`, the following change must be done in `simple-login-compose.yaml`:
-
-```patch
-  migration:
-    image: simplelogin/app:$SL_VERSION
--   command: [ "flask", "db", "upgrade" ]
-+   command: [ "alembic", "upgrade", "head" ]
-    container_name: sl-migration
-    env_file: .env
-```
-
-Finally, the following command must be run in the database:
-
-```bash
-docker compose exec -it postgres psql -U myuser simplelogin
-> UPDATE email_log SET alias_id=(SELECT alias_id FROM contact WHERE contact.id = email_log.contact_id);
-> \q
-```
-
-- Restart containers
-
-```sh
-docker compose stop && docker compose up --detach
-```
-
-After successfully upgrading to `v4.6.x-beta` you might want to upgrade
-to the latest stable version. Change the `SL_IMAGE` and `SL_VERSION`
-variables from the `.env` file:
-
-```env
-SL_VERSION=v4.70.0
-SL_IMAGE=app-ci
-```
-
-**Caution**: some [underpowered VPS](https://github.com/springcomp/self-hosted-simplelogin/issues/12#issuecomment-3160394621) might exhibit some WORKER_TIMEOUT errors
-when running the `sl-app` image. To mitigate this issue, you may want to
-increase the starting timeout value in [`simple-login-compose.yaml`](https://github.com/springcomp/self-hosted-simplelogin/blob/main/simple-login-compose.yaml#L49):
-
-```patch
-  app:
-    image: simplelogin/$SL_IMAGE:$SL_VERSION
-    container_name: sl-app
-    env_file: .env
-    volumes:
-      - ./pgp:/sl/pgp
-      - ./upload:/code/static/upload
-      - ./dkim.key:/dkim.key
-      - ./dkim.pub.key:/dkim.pub.key
-+   command: ["gunicorn","wsgi:app","-b","0.0.0.0:7777","-w","2","--timeout","30"]
-    restart: unless-stopped
-```
-
-And restart the containers.
-
-This will pull up the latest versions of the docker images,
-potentially running the updated `sl-migration` steps, and
-startup the application.
+_This section has been moved to the [reference documentation](https://github.com/springcomp/self-hosted-simplelogin/wiki/upgrade-sl)_
 
 ## How-to Upgrade from previous NGinx-based setup
 
-This section outlines the migration steps from a previous installation of `self-hosted-simplelogin` using the NGinx-based setup, to the current Traefik-based setup.
-
-### Backup your server
-
-1. Backup the database using the following command:
-
-```powershell
-mkdir /tmp/sl-backup/
-
-docker compose \
-  -f /opt/simplelogin/docker-compose.yaml exec postgres \
-  pg_dump -U <postgres-user-name> simplelogin -F c -b >/tmp/sl-backup/simplelogin.sql
-```
-
-1. Backup your DKIM public and private keys.
-
-1. Backup your PGP keys, avatar picture and undelivered emails from the `upload/` and `pgp/` folders.
-
-1. Backup your existing `.env` file.
-
-### Postfix
-
-The `postfix` container is running a private image that has changed from the previous NGinx-based setup to the current Traefik-based setup.
-
-That image needs to be regenerated. You can remove the previous version using the command:
-
-```sh
-docker rmi private/postfix:latest
-```
-
-### In-place upgrade
-
-In-place upgrade refers to the fact that you will upgrade the stack from the previous setup to the current setup in the same directoy.
-
-This is the easiest upgrade path as you only need to change the docker-compose and setup files. If you cloned this repository, you most likely need to use `git pull` to upgrade to the latest version.
-
-**Prerequisites**: make sure you are running a recent version of SimpleLogin. This section assumes you are running `app-ci:v4.70.0`.
-
-1. Stop the stack using `. ./down.sh`.
-1. Upgrade to the latest version of the files.
-1. Create and update the `.env` file from `.env.example`.
-
-The new `.env` file supports specifying parameters for certificate renewal using either the `DNS-01` or `TLS–ALPN-01` ACME challenge from Let’sEncrypt using [LEGO](https://go-acme.github.io/lego/dns/) , a Let’sEncrypt client library written in Go. Please, review the LEGO documentation for supported providers and their parameters.
-
-4. Start the stack using `. ./up.sh`.
-
-You can now cleanup the folders that are no longer useful:
-
-```sh
-rm -rf acme.sh/
-rm -rf nginx/
-```
-
-### Backup / restore upgrade
-
-If you want to keep the existing setup in a known working directory, you can use the backup - restore path to test the new setup from a separate folder.
-
-1. Clone this repository to get the latest version of the files.
-1. Create and update the `.env` file from `.env.example`.
-
-The new `.env` file supports specifying parameters for certificate renewal using either the `DNS-01` or `TLS–ALPN-01` ACME challenge from Let’sEncrypt using [LEGO](https://go-acme.github.io/lego/dns/) , a Let’sEncrypt client library written in Go. Please, review the LEGO documentation for supported providers and their parameters.
-
-3. Restore the `pgp/` and `upload/` folders.
-3. Restore the `dkim.pub.key` and `dkim.key` files.
-3. Restore the postfix `virtual` and `virtual-regexp` files.
-4. Start the stack using `. ./up.sh`.
-
-This will create the `private/postfix:latest` image and request new certificates from Let’s Encrypt.
-
-Once the application is running successfully, you need to restore the database. The easiest way it to copy the backup file in the `db/` folder:
-
-```sh
-sudo cp /tmp/sl-backup/simplelogin.sql db/
-docker compose exec -it pg_restore -U <postgres-user-name> \
-  --dbname=simplelogin \
-  --clean \
-  --verbose \
-  /var/lib/postgresql/data/simplelogin.sql
-```
+_This section has been moved to the [reference documentation](https://github.com/springcomp/self-hosted-simplelogin/wiki/upgrade-from-nginx)_
