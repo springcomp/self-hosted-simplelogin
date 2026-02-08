@@ -84,7 +84,15 @@ Run SimpleLogin from Docker containers:
     - set the `POSTGRES_PASSWORD` to match the postgres credentials (when starting from scratch, set to a random key).
     - set the `FLASK_SECRET` to an arbitrary secret key.
 
-#### Running the application
+### Postgres SQL
+
+This repository runs a postgres SQL in a Docker container.
+
+**Warning**: previous versions of this repository ran version `12.1`.
+Please, refer to the [reference documentation](https://github.com/springcomp/self-hosted-simplelogin/wiki/PostgreSQL) for more details and
+upgrade instructions.
+
+### Running the application
 
 Run the application using the following commands:
 

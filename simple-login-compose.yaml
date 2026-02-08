@@ -9,16 +9,19 @@ x-sl-defaults: &sl-defaults
     - internal
 
 services:
-
   ## SIMPLE LOGIN
   ## ============
-  
+
   postgres:
-    image: postgres:12.1
+    image: postgres:17.7
     container_name: sl-db
     env_file: .env
     healthcheck:
-      test: [ "CMD-SHELL", "PGPASSWORD=$$POSTGRES_PASSWORD pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB -h 127.0.0.1 -p 5432 || exit 1" ]
+      test:
+        [
+          "CMD-SHELL",
+          "PGPASSWORD=$$POSTGRES_PASSWORD pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB -h 127.0.0.1 -p 5432 || exit 1",
+        ]
       interval: 10s
       retries: 3
       start_period: 1s
@@ -30,7 +33,7 @@ services:
 
   migration:
     <<: *sl-defaults
-    command: [ "alembic", "upgrade", "head" ]
+    command: ["alembic", "upgrade", "head"]
     container_name: sl-migration
     depends_on:
       postgres:
@@ -38,7 +41,7 @@ services:
 
   init:
     <<: *sl-defaults
-    command: [ "python", "init_app.py" ]
+    command: ["python", "init_app.py"]
     container_name: sl-init
     depends_on:
       migration:
@@ -76,7 +79,7 @@ services:
       - traefik.http.middlewares.sts.headers.stsIncludeSubdomains=true
       ## only set stsPreload=true, after registering your domain on hstspreload.org
       - traefik.http.middlewares.sts.headers.stsPreload=false
-      ## static response for `mta-sts` subdomain 
+      ## static response for `mta-sts` subdomain
       - traefik.http.routers.mta-sts.rule=Host("mta-sts.${DOMAIN}") && PathPrefix("/.well-known/mta-sts.txt")
       - traefik.http.routers.mta-sts.service=noop@internal
       - traefik.http.routers.mta-sts.middlewares=mta-sts
