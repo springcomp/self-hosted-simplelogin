@@ -172,7 +172,7 @@ That alias may be created on the fly if it does not exist.
 
 For instance, emails sent to `someone@directory.mydomain.com` will be routed to `directory/someone@mydomain.com` by postfix.
 
-# How-to Upgrade from 3.4.0
+## How-to Upgrade from 3.4.0
 
 _This section has been moved to the [reference documentation](https://github.com/springcomp/self-hosted-simplelogin/wiki/upgrade-sl)_
 
