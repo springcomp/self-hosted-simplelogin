@@ -29,9 +29,11 @@ retry      unix       -       -       n       -       -       error
 rewrite    unix       -       -       n       -       -       trivial-rewrite
 scache     unix       -       -       n       -       1       scache
 showq      unix       n       -       n       -       -       showq
-smtp       inet       n       -       n       -       -       smtpd
+smtp       inet       n       -       n       -       1       postscreen
+smtpd      pass       -       -       n       -       -       smtpd
 smtp       unix       -       -       n       -       -       smtp
 tlsmgr     unix       -       -       n       1000?   1       tlsmgr
+tlsproxy   unix       -       -       n       -       0       tlsproxy
 trace      unix       -       -       n       -       0       bounce
 verify     unix       -       -       n       -       1       verify
 virtual    unix       -       n       n       -       -       virtual
