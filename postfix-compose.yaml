@@ -48,6 +48,8 @@ services:
     depends_on:
       dns:
         condition: service_healthy
+      postgres:
+        condition: service_healthy
       traefik-certificate-exporter:
         condition: service_healthy
     labels:
