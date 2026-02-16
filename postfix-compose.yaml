@@ -23,6 +23,54 @@ services:
         unbound-anchor -a /var/run/unbound/root.key || true
         exec su -s /bin/sh unbound -c "sh /entrypoint.sh"
 
+  redis:
+    image: redis:8.6.0
+    container_name: redis
+    networks:
+      - internal
+    volumes:
+      - ./redis/conf.d/:/usr/local/etc/redis/:ro
+      - redis-data:/data
+    entrypoint:
+      - redis-server
+      - /usr/local/etc/redis/redis.conf
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  rspamd:
+    image: rspamd/rspamd:latest
+    container_name: rspamd
+    dns:
+      - '10.0.0.53'
+    networks:
+      traefik:
+      internal:
+        ipv4_address: 10.0.0.54
+    labels:
+      - traefik.enable=true
+      - traefik.http.services.rspamd.loadbalancer.server.port=11334
+      - traefik.http.routers.rspamd.service=rspamd
+      - traefik.http.routers.rspamd.rule=Host("rspamd.${DOMAIN:?DOMAIN_not_set}")
+      - traefik.http.routers.rspamd.tls.certresolver=${LE_CHALLENGE:-tls}
+    volumes:
+      - ./rspamd/local.d/:/etc/rspamd/local.d/:ro
+      - ./rspamd/override.d/:/etc/rspamd/override.d/:ro
+      - rspamd-data:/var/lib/rspamd
+    environment:
+      - REDIS_WRITE_SERVERS=redis:6379
+      - REDIS_READ_SERVERS=redis:6379
+    depends_on:
+      dns:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
   postfix:
     image: private/postfix:latest
     build:
@@ -50,6 +98,8 @@ services:
         condition: service_healthy
       postgres:
         condition: service_healthy
+      rspamd:
+        condition: service_started
       traefik-certificate-exporter:
         condition: service_healthy
     labels:
@@ -80,6 +130,10 @@ services:
 
 volumes:
   certs:
+  redis-data:
+    name: redis-data
+  rspamd-data:
+    name: rspamd-data
   ## Uncomment the next lines, if traefik is running outside this project
   # traefik-acme:  # <-- do not change this identifier
   #   name: traefik-acme    # change (only) this to the name of traefik acme storage volume
