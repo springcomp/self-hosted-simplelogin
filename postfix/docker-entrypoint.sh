@@ -118,5 +118,18 @@ else
   echo "Spamhaus DSNBL checks disabled."
 fi
 
+# make sure queue_directory/data_directory (on the postfix-runtime volume) exist
+# and carry correct ownership; "postfix check" creates the queue subdirectory
+# tree, "postfix set-permissions" then fixes ownership/mode on all of it
+QUEUE_DIRECTORY="$(postconf -h queue_directory)"
+DATA_DIRECTORY="$(postconf -h data_directory)"
+mkdir -p "$QUEUE_DIRECTORY" "$DATA_DIRECTORY"
+postfix check
+# Alpine's postfix package ships without /usr/share/doc/postfix, so
+# set-permissions always fails to chown its (nonexistent) readme; that
+# failure is unrelated to queue_directory/data_directory, which get fixed
+# up regardless, so a nonzero exit here is expected and safe to ignore
+postfix set-permissions || true
+
 # hand over to container CMD (postfix start-fg)
 exec "$@"

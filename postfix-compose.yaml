@@ -38,6 +38,7 @@ services:
       - '25:25'
     volumes:
       - certs:/certs:ro
+      - postfix-runtime:/postfix-runtime
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "nc -w 3 127.0.0.1 25 </dev/null | grep -q '^220'"]
@@ -80,6 +81,7 @@ services:
 
 volumes:
   certs:
+  postfix-runtime:
   ## Uncomment the next lines, if traefik is running outside this project
   # traefik-acme:  # <-- do not change this identifier
   #   name: traefik-acme    # change (only) this to the name of traefik acme storage volume
