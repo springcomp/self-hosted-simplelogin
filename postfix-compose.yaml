@@ -13,13 +13,36 @@ services:
     networks:
       internal:
         ipv4_address: 10.0.0.53
-    volumes:
-      - ./unbound/conf.d/:/config/:ro
     restart: unless-stopped
+    # Listener config is written at container start instead of bind-mounted
+    # from ./unbound/conf.d/, so this has no host-file dependency at all.
+    # Picked up via the image's own `include: /config/*.conf`, additively
+    # alongside its default listener on 5053 - so the image's built-in
+    # healthcheck (which probes 5053) is unaffected.
+    # Recipe: https://github.com/springcomp/self-hosted-simplelogin/pull/46#issuecomment-3707216659
+    #
+    # module-config/identity/root-hints match what the previous
+    # bind-mounted unbound/conf.d/00-unbound.conf set, to not weaken
+    # anything the upstream maintainer deliberately configured:
+    # - module-config trims the cachedb module the image loads by default
+    #   (unused without a configured cache backend)
+    # - root-hints pins the image's own dns-root-hints package file, which
+    #   the image refreshes monthly via its own cron
+    #   (/etc/periodic/monthly/dns-root-hints) - the compiled-in fallback
+    #   Unbound would otherwise use only updates when the image itself does
     entrypoint:
       - /bin/sh
       - -ec
       - |
+        cat > /config/00-listen-port.conf <<'EOF'
+        server:
+          interface: 0.0.0.0@53
+          log-queries: yes
+          verbosity: 2
+          module-config: "validator iterator"
+          identity: "DNS"
+          root-hints: "/usr/share/dns-root-hints/named.root"
+        EOF
         unbound-anchor -a /var/run/unbound/root.key || true
         exec su -s /bin/sh unbound -c "sh /entrypoint.sh"
 
