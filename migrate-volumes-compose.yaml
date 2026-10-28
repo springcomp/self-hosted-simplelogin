@@ -1,0 +1,59 @@
+# One-time migration helper: copies pre-existing data from the old
+# bind-mount layout (./db, ./pgp, ./upload, ./dkim.key) into the named
+# volumes now used by simple-login-compose.yaml, if you're upgrading an
+# existing deployment.
+#
+# Safe to leave included even without any of the above present (e.g. a
+# fresh install) - it just creates the sldata directory structure and
+# does nothing else. Comment out the include line for this file in
+# docker-compose.yaml once you've confirmed the migration succeeded.
+#
+# The whole project directory is bind-mounted read-only (rather than each
+# legacy path individually) because the project directory always exists,
+# whereas e.g. ./dkim.key commonly does not on a fresh setup - bind
+# mounting a single nonexistent file path would make Docker silently
+# create an empty directory there instead of leaving it absent.
+services:
+  volume-migrate:
+    image: alpine:3.22
+    volumes:
+      - .:/legacy:ro
+      - db:/new/db
+      - sldata:/new/sldata
+      - upload:/new/upload
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        set -eu
+        migrate() {
+          if [ -n "$$(ls -A "$2" 2>/dev/null)" ]; then
+            echo "[volume-migrate] $2 already has data, skipping"
+            return
+          fi
+          if [ -d "$1" ] && [ -n "$$(ls -A "$1" 2>/dev/null)" ]; then
+            echo "[volume-migrate] copying existing $1 -> $2"
+            cp -a "$1"/. "$2"/
+          else
+            echo "[volume-migrate] no existing data at $1, starting fresh"
+          fi
+        }
+        mkdir -p /new/sldata/pgp /new/sldata/dkim /new/sldata/tmp /new/sldata/unsent
+        migrate /legacy/db /new/db
+        migrate /legacy/pgp /new/sldata/pgp
+        migrate /legacy/upload /new/upload
+        chmod 700 /new/sldata/pgp
+        if [ -n "$$(ls -A /new/sldata/dkim 2>/dev/null)" ]; then
+          echo "[volume-migrate] /new/sldata/dkim already has data, skipping"
+        elif [ -f /legacy/dkim.key ]; then
+          echo "[volume-migrate] copying existing dkim.key"
+          cp -a /legacy/dkim.key /new/sldata/dkim/dkim.key
+          chmod 600 /new/sldata/dkim/dkim.key
+        else
+          echo "[volume-migrate] no existing dkim.key"
+        fi
+
+  postgres:
+    depends_on:
+      volume-migrate:
+        condition: service_completed_successfully

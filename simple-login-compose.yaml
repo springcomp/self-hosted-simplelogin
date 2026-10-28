@@ -1,10 +1,18 @@
 x-sl-defaults: &sl-defaults
   image: simplelogin/$SL_IMAGE:$SL_VERSION
   env_file: .env
+  # Paths inside the container - not meant to be end-user configurable
+  # (we control the whole image/volume layout), so these are fixed here
+  # rather than left for .env to set. Overrides any stale value a .env
+  # might still carry from before this change.
+  environment:
+    DKIM_PRIVATE_KEY_PATH: /sl/dkim/dkim.key
+    GNUPGHOME: /sl/pgp
+    TEMP_DIR: /sl/tmp
+    SAVE_UNSENT_DIR: /sl/unsent
   volumes:
-    - ./pgp:/sl/pgp
-    - ./upload:/code/static/upload
-    - ./dkim.key:/dkim.key
+    - sldata:/sl
+    - upload:/code/static/upload
   networks:
     - internal
 
@@ -28,7 +36,7 @@ services:
     networks:
       - internal
     volumes:
-      - ./db:/var/lib/postgresql/data
+      - db:/var/lib/postgresql/data
     restart: unless-stopped
 
   migration:
@@ -41,8 +49,27 @@ services:
 
   init:
     <<: *sl-defaults
-    command: ["python", "init_app.py"]
     container_name: sl-init
+    # Ensures the sldata volume has the directory structure the app needs,
+    # and generates a DKIM key if none exists yet - runs on every start,
+    # but only ever acts once (mkdir -p and the missing-key check are both
+    # no-ops after the first successful run). This also covers the case
+    # where migrate-volumes-compose.yaml (which does the same mkdir -p, to
+    # have somewhere to copy pre-existing bind-mounted data into) has been
+    # commented out after migration, or was never used at all.
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        set -eu
+        umask 077
+        mkdir -p /sl/pgp /sl/dkim /sl/tmp /sl/unsent
+        if [ ! -s "$$DKIM_PRIVATE_KEY_PATH" ]; then
+          echo "[dkim-init] No key at $$DKIM_PRIVATE_KEY_PATH — generating 1024-bit RSA key..."
+          openssl genrsa -out "$$DKIM_PRIVATE_KEY_PATH" 1024
+        fi
+        chmod 600 "$$DKIM_PRIVATE_KEY_PATH" 2>/dev/null || true
+        exec python init_app.py
     depends_on:
       migration:
         condition: service_completed_successfully
@@ -50,6 +77,23 @@ services:
   app:
     <<: *sl-defaults
     container_name: sl-app
+    # Prints the DKIM public key on every start, for convenience when
+    # setting up the DNS TXT record. No set -eu here: by the time this
+    # container starts, `init` above has already guaranteed a valid key
+    # exists, and the openssl pipe below wouldn't propagate a failure from
+    # its first stage anyway (no pipefail in /bin/sh), so -e would only
+    # look like protection without actually providing any.
+    #
+    # --timeout 45 (not the Dockerfile default of 15): a fix from an
+    # earlier deployment that never made it back into the app repo.
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        PUB="$(openssl rsa -in "$$DKIM_PRIVATE_KEY_PATH" -pubout -outform DER 2>/dev/null | openssl base64 -A)"
+        echo "[dkim-init] DKIM public key (p=) — add this to your DNS TXT record:"
+        echo "v=DKIM1; k=rsa; p=$$PUB"
+        exec gunicorn wsgi:app -b 0.0.0.0:7777 -w 2 --timeout 45
     networks:
       - traefik
       - internal
@@ -110,3 +154,8 @@ services:
         condition: service_completed_successfully
       email:
         condition: service_started
+
+volumes:
+  db:
+  sldata:
+  upload:
