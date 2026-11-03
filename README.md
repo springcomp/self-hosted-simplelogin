@@ -110,14 +110,17 @@ You may want to setup [Certificate Authority Authorization (CAA)](https://github
 
 If all the above steps are successful, open <https://app.mydomain.com/> and create your first account!
 
-By default, new accounts are not premium so don't have unlimited aliases. To make your account premium,
-please go to the database, table "users" and set "lifetime" column to "1" or "TRUE":
+By default, new accounts are not premium so don't have unlimited aliases. To make your account premium and admin,
+go to the database, table "users" and set "lifetime" and "is_admin" columns to "TRUE":
 
 ```bash
 docker compose exec -it postgres psql -U myuser simplelogin
-> UPDATE users SET lifetime = TRUE;
+> UPDATE users SET lifetime = TRUE, is_admin = TRUE WHERE lower(email) = lower('admin@mydomain.com');
+> ALTER TABLE users ALTER COLUMN lifetime SET DEFAULT true;
 > \q
 ```
+
+The `UPDATE` should report `UPDATE 1`. If it reports `UPDATE 0`, the account has not been registered yet or the email address is wrong.
 
 Once you've created all your desired login accounts, add these lines to `.env` to disable further registrations:
 
