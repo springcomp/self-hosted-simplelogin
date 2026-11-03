@@ -81,6 +81,7 @@ services:
   traefik-certificate-exporter:
     image: ravensorb/traefik-certificate-exporter:latest
     container_name: cert-exporter
+    restart: unless-stopped
     environment:
       - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_FLAT=true
       - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_RESTARTCONTAINER=true
