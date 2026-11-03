@@ -34,8 +34,8 @@ services:
         cat > /config/00-listen-port.conf <<'EOF'
         server:
           interface: 0.0.0.0@53
-          log-queries: yes
-          verbosity: 2
+          verbosity: 1
+          infra-cache-max-rtt: 1000
           module-config: "validator iterator"
           identity: "DNS"
           root-hints: "/usr/share/dns-root-hints/named.root"
