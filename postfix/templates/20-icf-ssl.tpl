@@ -4,9 +4,11 @@ smtpd_tls_cert_file = /certs/app.domain.tld.fullchain.pem
 smtpd_tls_key_file  = /certs/app.domain.tld.key
 
 # ---- Logging ----
-# Log TLS negotiations;
+# Log TLS negotiations (inbound: smtpd, outbound: smtp - shows whether
+# deliveries were "Verified" via DANE or only "Untrusted"/"Anonymous");
 # set to 2 for more detailed debugging if needed.
 smtpd_tls_loglevel = 1
+smtp_tls_loglevel = 1
 
 # Explicitly exclude known-weak ciphers (mostly redundant with modern OpenSSL).
 smtp_tls_mandatory_exclude_ciphers  = aNULL, eNULL, EXPORT, DES, RC4, MD5, PSK, SRP
