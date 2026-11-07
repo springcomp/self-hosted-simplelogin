@@ -33,3 +33,10 @@ postscreen_dnsbl_sites =
   list.dnswl.org=127.0.[0..255].3*-5
 postscreen_dnsbl_threshold = 1
 postscreen_dnsbl_action = enforce
+# A negative combined score by itself does not let a client skip anything
+# (with only negative weights above, postscreen_dnsbl_threshold never blocks
+# either): the allowlist threshold is what turns the DNSWL score into a
+# pass. Any list.dnswl.org listing scores <= -2, so -1 lets every listed
+# client skip the before- and after-220-greeting tests and go straight to
+# smtpd; unlisted clients (score 0) are unaffected.
+postscreen_dnsbl_allowlist_threshold = -1
