@@ -32,7 +32,8 @@ services:
       - internal
     env_file: .env
     ports:
-      - '25:25'
+      # IPv4 only: the internal network is IPv4-only (see mynetworks)
+      - '0.0.0.0:25:25'
     volumes:
       - certs:/certs:ro
       - postfix-runtime:/postfix-runtime

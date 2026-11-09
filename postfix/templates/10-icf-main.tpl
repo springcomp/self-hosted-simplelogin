@@ -17,7 +17,14 @@ myhostname = app.domain.tld
 mydomain = domain.tld
 myorigin = domain.tld
 
+# Trusted clients that may relay (the SimpleLogin containers).
+# "!10.0.0.1" must come first (first match wins): the bridge gateway is the
+# source address of every connection that docker-proxy forwards - e.g. any
+# IPv6 client when port 25 is also published on [::]:25, or local clients on
+# the host. Without the exclusion such clients would be trusted, i.e. an open
+# relay that also skips postscreen and all RBL checks.
 mynetworks =
+  !10.0.0.1,
   10.0.0.0/24,
   127.0.0.0/8,
   [::1]/128,

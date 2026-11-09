@@ -44,6 +44,7 @@ Additional steps:
 - **CAA**: Specifies which certificate authorities are allowed to issue SSL certificates for your domain.
 - **MTA-STS**: Enforces secure, encrypted connections between mail servers.
 - **TLS-RPT**: Reports TLS connection failures to improve email delivery security.
+  See [MTA-STS and TLS-RPT rollout](#mta-sts-and-tls-rpt-rollout).
 
 **Warning**: setting up a CAA record will restrict which certificate authority can successfully issue SSL certificates for your domain.
 This will prevent certificate issuance from Let’s Encrypt staging servers. You may want to differ this DNS record until after SSL certificates are successfully issued for your domain.
@@ -128,6 +129,28 @@ DISABLE_ONBOARDING=true
 Then, to restart the web app, apply: `docker compose restart app`
 
 ## Miscellaneous
+
+### MTA-STS and TLS-RPT rollout
+
+MTA-STS needs the policy file (served by Traefik at `https://mta-sts.mydomain.com/.well-known/mta-sts.txt`,
+see the static response labels in `simple-login-compose.yaml`) and two DNS records:
+
+```
+_mta-sts.mydomain.com.    TXT "v=STSv1; id=1767225600"
+_smtp._tls.mydomain.com.  TXT "v=TLSRPTv1; rua=mailto:tls-reports@mydomain.com"
+```
+
+Change the `id` (e.g. to the current Unix timestamp) whenever the policy file changes.
+
+1. **Testing**: start with `mode: testing`. Senders deliver anyway, but send daily TLS-RPT reports
+   (gzipped JSON). Watch for a few weeks, including at least one certificate renewal:
+   `summary.total-failure-session-count` should stay `0`; otherwise `failure-details[].result-type`
+   names the cause (e.g. `certificate-host-mismatch`, `sts-policy-fetch-error`).
+2. **Enforce**: set `mode: enforce` and raise `max_age` (e.g. `604800`), check the policy with `curl`,
+   then change the `id`. From now on a broken certificate means no mail from MTA-STS-aware senders.
+3. **Reports**: keep the TLS-RPT record as an early warning, or remove it once enforce has been stable
+   for some weeks. To retire MTA-STS, never just delete the record: publish `mode: none` with a new
+   `id` and keep serving the policy for at least the old `max_age`.
 
 ### Postfix configuration - Spamhaus
 
