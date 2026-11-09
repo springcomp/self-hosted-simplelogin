@@ -8,3 +8,4 @@ postscreen_non_smtp_command_enable = yes
 postscreen_non_smtp_command_action = enforce
 
 postscreen_pipelining_enable = yes
+postscreen_pipelining_action=enforce
