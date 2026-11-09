@@ -18,5 +18,5 @@ smtpd_recipient_restrictions =
   reject_rhsbl_sender your_DQS_key.zrd.dq.spamhaus.net=127.0.2.[2..24],
   reject_rhsbl_helo your_DQS_key.zrd.dq.spamhaus.net=127.0.2.[2..24],
   reject_rhsbl_reverse_client your_DQS_key.zrd.dq.spamhaus.net=127.0.2.[2..24],
-  reject_rbl_client bl.spamcop.net,
+  reject_rbl_client bl.spamcop.net=127.0.0.2,
   permit
