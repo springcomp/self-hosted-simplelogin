@@ -7,6 +7,10 @@ include:
   - traefik-compose.yaml
   - simple-login-compose.yaml
   - postfix-compose.yaml
+  ## Migrates pre-existing ./db, ./pgp, ./upload, ./dkim.key content (if any)
+  ## into the named volumes above. Safe to leave in for a fresh install too.
+  ## Comment out once you've confirmed the migration succeeded.
+  - migrate-volumes-compose.yaml
 
 networks:
   internal:
