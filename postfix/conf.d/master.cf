@@ -14,6 +14,7 @@ bounce     unix       -       -       n       -       0       bounce
 cleanup    unix       n       -       n       -       0       cleanup
 defer      unix       -       -       n       -       0       bounce
 discard    unix       -       -       n       -       -       discard
+dnsblog    unix       -       -       n       -       0       dnsblog
 error      unix       -       -       n       -       -       error
 flush      unix       n       -       n       1000?   0       flush
 lmtp       unix       -       -       n       -       -       lmtp
