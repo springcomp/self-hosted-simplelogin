@@ -13,6 +13,8 @@ services:
     user: "0:0"
     cap_add:
       - NET_BIND_SERVICE
+    tmpfs:
+      - /config
     networks:
       internal:
         ipv4_address: 10.0.0.53
@@ -68,6 +70,8 @@ services:
       - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_RESOLVERINPATHNAME=false
       - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_DOMAINS_INCLUDE=${DOMAIN},${SUBDOMAIN:-app}.${DOMAIN},*.${DOMAIN}
       - TRAEFIK_CERTIFICATE_EXPORTER_SETTINGS_DOMAINS_EXCLUDE=exclude # see: https://github.com/ravensorb/traefik-certificate-exporter/issues/5
+    tmpfs:
+      - /config
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - traefik-acme:/data:ro
