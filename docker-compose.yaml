@@ -9,7 +9,8 @@ include:
   - postfix-compose.yaml
   ## Migrates pre-existing ./db, ./pgp, ./upload, ./dkim.key content (if any)
   ## into the named volumes above. Safe to leave in for a fresh install too.
-  ## Comment out once you've confirmed the migration succeeded.
+  ## Once migration succeeds, comment this out and remove postgres's
+  ## volume-migrate dependency in simple-login-compose.yaml.
   - migrate-volumes-compose.yaml
 
 networks:

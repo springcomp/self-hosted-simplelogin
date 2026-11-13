@@ -37,6 +37,9 @@ services:
       - internal
     volumes:
       - db:/var/lib/postgresql/data
+    depends_on:
+      volume-migrate:
+        condition: service_completed_successfully
     restart: unless-stopped
 
   migration:
