@@ -6,7 +6,9 @@
 # Safe to leave included even without any of the above present (e.g. a
 # fresh install) - it just creates the sldata directory structure and
 # does nothing else. Comment out the include line for this file in
-# docker-compose.yaml once you've confirmed the migration succeeded.
+# docker-compose.yaml once you've confirmed the migration succeeded, and
+# remove the volume-migrate dependency from postgres in
+# simple-login-compose.yaml at the same time.
 #
 # The whole project directory is bind-mounted read-only (rather than each
 # legacy path individually) because the project directory always exists,
@@ -52,8 +54,3 @@ services:
         else
           echo "[volume-migrate] no existing dkim.key"
         fi
-
-  postgres:
-    depends_on:
-      volume-migrate:
-        condition: service_completed_successfully
